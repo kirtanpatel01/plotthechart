@@ -1,6 +1,18 @@
 import { z } from 'zod'
 
 export const PALETTES = {
+  sandstone: {
+    name: 'Sandstone Ochre',
+    colors: ['#e5b83b', '#8c8c85', '#cca075', '#5b5b56', '#d99f26', '#2c2c2c'],
+  },
+  sakura: {
+    name: 'Sakura Blossom',
+    colors: ['#e86c8d', '#b8335a', '#c99789', '#e6b8af', '#a67c72', '#d4a373'],
+  },
+  moss: {
+    name: 'Moss Botanical',
+    colors: ['#5c9e31', '#3f6a34', '#f28482', '#eab308', '#0051ba', '#78716c'],
+  },
   ocean: {
     name: 'Ocean Lagoon',
     colors: ['#0ea5e9', '#14b8a6', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6'],
@@ -160,8 +172,17 @@ export const ChartConfigSchema = z.object({
   showGrid: z.boolean().default(true),
   showValueLabels: z.boolean().default(false),
   palette: z
-    .enum(['ocean', 'emerald', 'sunset', 'vivid', 'monochrome'])
-    .default('ocean'),
+    .enum([
+      'sandstone',
+      'sakura',
+      'moss',
+      'ocean',
+      'emerald',
+      'sunset',
+      'vivid',
+      'monochrome',
+    ])
+    .default('sandstone'),
   options: ChartSpecificOptionsSchema.default({
     barLayout: 'grouped',
     barOrientation: 'vertical',

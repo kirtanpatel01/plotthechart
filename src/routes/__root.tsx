@@ -6,8 +6,15 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { AppSidebar } from '../components/app-sidebar'
 import Footer from '../components/Footer'
-import Header from '../components/Header'
+import ThemeToggle from '../components/ThemeToggle'
+import { Separator } from '../components/ui/separator'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '../components/ui/sidebar'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
@@ -35,12 +42,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         name: 'theme-color',
         media: '(prefers-color-scheme: light)',
-        content: '#fbfff8',
+        content: '#f8f8f7',
       },
       {
         name: 'theme-color',
         media: '(prefers-color-scheme: dark)',
-        content: '#0a1418',
+        content: '#191918',
       },
       {
         name: 'color-scheme',
@@ -58,15 +65,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   notFoundComponent: () => (
-    <main className="mx-auto max-w-xl px-4 py-16 text-center space-y-4">
+    <main className="w-full px-6 py-16 text-center space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Page Not Found</h1>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground">
         The requested route does not exist in PlotTheChart Studio.
       </p>
       <Link
         to="/"
         search={{}}
-        className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground no-underline"
+        className="inline-flex h-9 items-center rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline"
       >
         Return to Chart Studio
       </Link>
@@ -84,11 +91,30 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body
         suppressHydrationWarning
-        className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]"
+        className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/25"
       >
-        <Header />
-        {children}
-        <Footer />
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="flex min-h-svh w-full flex-1 flex-col min-w-0">
+            <header className="sticky top-0 z-30 flex h-12 w-full shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 sm:px-6 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="-ml-1.5 text-muted-foreground hover:text-foreground" />
+                <Separator
+                  orientation="vertical"
+                  className="mx-1 data-[orientation=vertical]:h-4 opacity-60"
+                />
+                <span className="font-medium text-muted-foreground">
+                  Workspace
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+              </div>
+            </header>
+            <div className="flex-1 w-full min-w-0">{children}</div>
+            <Footer />
+          </SidebarInset>
+        </SidebarProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',

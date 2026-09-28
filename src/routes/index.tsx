@@ -26,7 +26,7 @@ function StudioHomePage() {
   const { initialProject } = Route.useLoaderData()
 
   return (
-    <main className="min-h-[calc(100vh-8rem)]">
+    <main className="w-full min-h-[calc(100vh-8rem)]">
       <ChartStudio
         key={initialProject?.id ?? 'new-studio'}
         initialProject={initialProject}

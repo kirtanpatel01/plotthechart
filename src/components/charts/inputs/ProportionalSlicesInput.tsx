@@ -1,7 +1,6 @@
 import { ArrowDownWideNarrow, Percent, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 import { PALETTES } from '#/lib/charts/types'
 import type { PaletteId, ProportionalSlicesData } from '#/lib/charts/types'
 
@@ -83,165 +82,179 @@ export function ProportionalSlicesInput({
 
   return (
     <div className="space-y-4" data-testid="proportional-slices-input">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted/30 p-3">
-        <div className="flex items-center gap-3">
-          <div>
-            <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Measurement Unit
-            </Label>
-            <Input
-              value={data.unitLabel}
-              onChange={(e) => handleUnitChange(e.target.value)}
-              placeholder="e.g. GWh, $K, %"
-              className="mt-1 h-7 w-28 text-xs font-semibold"
-            />
-          </div>
-          <div className="border-l border-border pl-3">
-            <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">
-              Total Sum
-            </span>
-            <span className="text-sm font-bold tabular-nums">
-              {totalValue.toLocaleString()} {data.unitLabel}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={handleSortDescending}
-          >
-            <ArrowDownWideNarrow className="h-3.5 w-3.5" />
-            Sort High → Low
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={handleNormalizeTo100}
-          >
-            <Percent className="h-3.5 w-3.5" />
-            Normalize to 100%
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={handleAddSlice}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Slice
-          </Button>
-        </div>
-      </div>
-
-      {/* Live proportional strip preview */}
-      <div className="space-y-1.5">
-        <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-          {data.slices.map((s, idx) => {
-            const pct =
-              totalValue > 0 ? Math.max(0, (s.value / totalValue) * 100) : 0
-            const color =
-              s.color || paletteColors[idx % paletteColors.length] || '#0ea5e9'
-            return (
-              <div
-                key={s.id}
-                style={{ width: `${pct}%`, backgroundColor: color }}
-                title={`${s.label}: ${pct.toFixed(1)}%`}
-                className="transition-[background-color,opacity] duration-[180ms] ease-[var(--ease-out)]"
-              />
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-2.5">
-        {data.slices.map((slice, idx) => {
-          const sharePct =
-            totalValue > 0
-              ? ((Math.max(0, slice.value) / totalValue) * 100).toFixed(1)
-              : '0.0'
-          const sliceColor =
-            slice.color ||
-            paletteColors[idx % paletteColors.length] ||
-            '#0ea5e9'
-
+      {/* Subtle proportional strip */}
+      <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+        {data.slices.map((s, idx) => {
+          const pct =
+            totalValue > 0 ? Math.max(0, (s.value / totalValue) * 100) : 0
+          const color =
+            s.color || paletteColors[idx % paletteColors.length] || '#0ea5e9'
           return (
             <div
-              key={slice.id}
-              className="rounded-xl border border-border bg-card/70 p-3 transition-colors hover:border-foreground/20"
-            >
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12 sm:items-center">
-                <div className="flex items-center gap-2 sm:col-span-5">
-                  <input
-                    type="color"
-                    value={sliceColor}
-                    onChange={(e) =>
-                      handleSliceChange(slice.id, { color: e.target.value })
-                    }
-                    title="Choose custom slice color"
-                    className="h-7 w-7 cursor-pointer rounded-md border border-border bg-transparent p-0.5 shrink-0"
-                  />
-                  <Input
-                    value={slice.label}
-                    onChange={(e) =>
-                      handleSliceChange(slice.id, { label: e.target.value })
-                    }
-                    placeholder="Slice label"
-                    aria-label={`Slice ${idx + 1} label`}
-                    className="h-8 text-xs font-medium"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 sm:col-span-3">
-                  <Input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={slice.value}
-                    onChange={(e) => {
-                      const parsed = Number(e.target.value)
-                      handleSliceChange(slice.id, {
-                        value: Number.isFinite(parsed) ? Math.max(0, parsed) : 0,
-                      })
-                    }}
-                    aria-label={`Slice ${idx + 1} value`}
-                    className="h-8 text-xs font-mono tabular-nums"
-                  />
-                  <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground shrink-0">
-                    {sharePct}%
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 sm:col-span-4">
-                  <Input
-                    value={slice.note ?? ''}
-                    onChange={(e) =>
-                      handleSliceChange(slice.id, { note: e.target.value })
-                    }
-                    placeholder="Annotation / note (optional)"
-                    aria-label={`Slice ${idx + 1} annotation`}
-                    className="h-8 text-xs text-muted-foreground"
-                  />
-                  <button
-                    type="button"
-                    disabled={data.slices.length <= 1}
-                    onClick={() => handleRemoveSlice(slice.id)}
-                    title="Remove slice"
-                    className="p-1.5 text-muted-foreground hover:text-destructive disabled:opacity-30 transition-colors rounded shrink-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+              key={s.id}
+              style={{ width: `${pct}%`, backgroundColor: color }}
+              title={`${s.label}: ${pct.toFixed(1)}%`}
+              className="transition-[background-color,opacity] duration-[180ms] ease-[var(--ease-out)]"
+            />
           )
         })}
+      </div>
+
+      {/* Clean Unified Table of Slices */}
+      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-border/70 bg-muted/30 font-semibold text-muted-foreground">
+              <th className="px-3.5 py-2.5">Segment</th>
+              <th className="px-3.5 py-2.5 w-40">
+                <div className="flex items-center gap-1.5">
+                  <span>Value</span>
+                  <Input
+                    value={data.unitLabel}
+                    onChange={(e) => handleUnitChange(e.target.value)}
+                    placeholder="Unit"
+                    aria-label="Measurement unit"
+                    className="h-7 w-16 border-transparent bg-background/60 px-2 font-medium hover:border-border/60 focus-visible:border-ring shadow-none"
+                  />
+                </div>
+              </th>
+              <th className="px-3.5 py-2.5 w-20 text-right">Share</th>
+              <th className="px-3.5 py-2.5">Note</th>
+              <th className="px-2 py-2.5 w-10" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/40">
+            {data.slices.map((slice, idx) => {
+              const sharePct =
+                totalValue > 0
+                  ? ((Math.max(0, slice.value) / totalValue) * 100).toFixed(1)
+                  : '0.0'
+              const sliceColor =
+                slice.color ||
+                paletteColors[idx % paletteColors.length] ||
+                '#0ea5e9'
+
+              return (
+                <tr
+                  key={slice.id}
+                  className="hover:bg-muted/20 transition-colors"
+                >
+                  <td className="px-3.5 py-2 align-middle">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={sliceColor}
+                        onChange={(e) =>
+                          handleSliceChange(slice.id, { color: e.target.value })
+                        }
+                        title="Choose custom slice color"
+                        className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0 shrink-0"
+                      />
+                      <Input
+                        value={slice.label}
+                        onChange={(e) =>
+                          handleSliceChange(slice.id, { label: e.target.value })
+                        }
+                        placeholder="Slice label"
+                        aria-label={`Slice ${idx + 1} label`}
+                        className="border-transparent bg-transparent px-2 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                      />
+                    </div>
+                  </td>
+
+                  <td className="px-3.5 py-2 align-middle">
+                    <Input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={slice.value}
+                      onChange={(e) => {
+                        const parsed = Number(e.target.value)
+                        handleSliceChange(slice.id, {
+                          value: Number.isFinite(parsed)
+                            ? Math.max(0, parsed)
+                            : 0,
+                        })
+                      }}
+                      aria-label={`Slice ${idx + 1} value`}
+                      className="border-transparent bg-transparent px-2 font-mono tabular-nums hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                    />
+                  </td>
+
+                  <td className="px-3.5 py-2 align-middle text-right font-mono tabular-nums text-muted-foreground">
+                    {sharePct}%
+                  </td>
+
+                  <td className="px-3.5 py-2 align-middle">
+                    <Input
+                      value={slice.note ?? ''}
+                      onChange={(e) =>
+                        handleSliceChange(slice.id, { note: e.target.value })
+                      }
+                      placeholder="Optional note..."
+                      aria-label={`Slice ${idx + 1} annotation`}
+                      className="border-transparent bg-transparent px-2 text-muted-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                    />
+                  </td>
+
+                  <td className="px-2 py-2 align-middle text-right">
+                    <button
+                      type="button"
+                      disabled={data.slices.length <= 1}
+                      onClick={() => handleRemoveSlice(slice.id)}
+                      title="Remove slice"
+                      className="p-1.5 text-muted-foreground/50 hover:text-destructive disabled:opacity-20 transition-colors rounded"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Quiet Compact Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleAddSlice}
+          >
+            <Plus className="h-4 w-4" />
+            Add Slice
+          </Button>
+          <span className="text-muted-foreground tabular-nums">
+            Total: {totalValue.toLocaleString()} {data.unitLabel}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleSortDescending}
+          >
+            <ArrowDownWideNarrow className="h-4 w-4" />
+            Sort
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleNormalizeTo100}
+          >
+            <Percent className="h-4 w-4" />
+            Normalize 100%
+          </Button>
+        </div>
       </div>
     </div>
   )

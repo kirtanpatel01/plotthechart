@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   createColumnHelper,
   tableFeatures,
@@ -189,82 +189,120 @@ export function TabularSeriesInput({
     setCsvText('')
   }
 
+  // Keep latest data & callbacks in a ref so TanStack Table column definitions
+  // stay referentially stable across keystrokes (preventing FlexRender from
+  // unmounting and remounting <Input> cells on every character typed).
+  const latestRef = useRef({
+    data,
+    paletteColors,
+    handleCategoryLabelChange,
+    handleSeriesNameChange,
+    handleRemoveSeries,
+    handleRowCategoryChange,
+    handleCellValueChange,
+    handleRemoveRow,
+  })
+  latestRef.current = {
+    data,
+    paletteColors,
+    handleCategoryLabelChange,
+    handleSeriesNameChange,
+    handleRemoveSeries,
+    handleRowCategoryChange,
+    handleCellValueChange,
+    handleRemoveRow,
+  }
+
+  const seriesStructureKey = data.series.map((s) => s.id).join('|')
+
   const columns = useMemo(() => {
     const categoryCol = columnHelper.accessor('category', {
       id: '__category__',
-      header: () => (
-        <div className="min-w-[120px]">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-            Dimension Column
-          </span>
-          <Input
-            value={data.categoryLabel}
-            onChange={(e) => handleCategoryLabelChange(e.target.value)}
-            aria-label="Category dimension label"
-            className="h-7 text-xs font-semibold bg-background/80"
-          />
-        </div>
-      ),
+      header: () => {
+        const cur = latestRef.current
+        return (
+          <div className="min-w-[120px]">
+            <Input
+              value={cur.data.categoryLabel}
+              onChange={(e) => cur.handleCategoryLabelChange(e.target.value)}
+              aria-label="Category dimension label"
+              className="border-transparent bg-transparent px-2 font-semibold text-muted-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+            />
+          </div>
+        )
+      },
       cell: (info) => {
-        const row = info.row.original
+        const cur = latestRef.current
+        const rowId = info.row.original.id
+        const row =
+          cur.data.rows.find((r) => r.id === rowId) ?? info.row.original
         return (
           <Input
             value={row.category}
-            onChange={(e) => handleRowCategoryChange(row.id, e.target.value)}
+            onChange={(e) => cur.handleRowCategoryChange(row.id, e.target.value)}
             aria-label={`Category name for row ${info.row.index + 1}`}
-            className="h-8 text-xs font-medium min-w-[110px]"
+            className="min-w-[110px] border-transparent bg-transparent px-2.5 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
           />
         )
       },
     })
 
-    const seriesCols = data.series.map((s, idx) => {
-      const seriesColor =
-        s.color || paletteColors[idx % paletteColors.length] || '#0ea5e9'
-      return columnHelper.accessor((row) => row.values[s.id] ?? 0, {
-        id: s.id,
-        header: () => (
-          <div className="min-w-[125px]">
-            <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: seriesColor }}
-                />
-                Series {idx + 1}
-              </span>
-              {data.series.length > 1 && (
+    const seriesIds = seriesStructureKey ? seriesStructureKey.split('|') : []
+    const seriesCols = seriesIds.map((seriesId, idx) => {
+      return columnHelper.accessor((row) => row.values[seriesId] ?? 0, {
+        id: seriesId,
+        header: () => {
+          const cur = latestRef.current
+          const s = cur.data.series.find((item) => item.id === seriesId)
+          if (!s) return null
+          const seriesColor =
+            s.color ||
+            cur.paletteColors[idx % cur.paletteColors.length] ||
+            '#0ea5e9'
+          return (
+            <div className="group/col flex min-w-[155px] items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 rounded-full shrink-0 ml-1.5"
+                style={{ backgroundColor: seriesColor }}
+              />
+              <Input
+                value={s.name}
+                onChange={(e) =>
+                  cur.handleSeriesNameChange(s.id, e.target.value)
+                }
+                aria-label={`Series ${idx + 1} name`}
+                className="border-transparent bg-transparent px-2 font-semibold text-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+              />
+              {cur.data.series.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => handleRemoveSeries(s.id)}
+                  onClick={() => cur.handleRemoveSeries(s.id)}
                   title={`Remove ${s.name}`}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-0.5 rounded"
+                  className="opacity-0 group-hover/col:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity p-1 rounded shrink-0"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
-            <Input
-              value={s.name}
-              onChange={(e) => handleSeriesNameChange(s.id, e.target.value)}
-              aria-label={`Series ${idx + 1} name`}
-              className="h-7 text-xs font-semibold bg-background/80"
-            />
-          </div>
-        ),
+          )
+        },
         cell: (info) => {
-          const row = info.row.original
-          const currentVal = row.values[s.id] ?? 0
+          const cur = latestRef.current
+          const rowId = info.row.original.id
+          const row =
+            cur.data.rows.find((r) => r.id === rowId) ?? info.row.original
+          const s = cur.data.series.find((item) => item.id === seriesId)
+          const currentVal = row.values[seriesId] ?? 0
           return (
             <Input
               type="number"
               step="any"
               value={currentVal}
               onChange={(e) =>
-                handleCellValueChange(row.id, s.id, e.target.value)
+                cur.handleCellValueChange(row.id, seriesId, e.target.value)
               }
-              aria-label={`${s.name} value for ${row.category}`}
-              className="h-8 text-xs font-mono tabular-nums min-w-[95px]"
+              aria-label={`${s?.name ?? seriesId} value for ${row.category}`}
+              className="min-w-[100px] border-transparent bg-transparent px-2.5 font-mono tabular-nums hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
             />
           )
         },
@@ -275,124 +313,47 @@ export function TabularSeriesInput({
       id: '__actions__',
       header: () => <span className="sr-only">Row Actions</span>,
       cell: (info) => {
-        const row = info.row.original
+        const cur = latestRef.current
+        const rowId = info.row.original.id
         return (
           <button
             type="button"
-            disabled={data.rows.length <= 1}
-            onClick={() => handleRemoveRow(row.id)}
+            disabled={cur.data.rows.length <= 1}
+            onClick={() => cur.handleRemoveRow(rowId)}
             title="Delete row"
-            className="p-1.5 text-muted-foreground hover:text-destructive disabled:opacity-30 transition-colors rounded"
+            className="p-1.5 text-muted-foreground/50 hover:text-destructive disabled:opacity-20 transition-colors rounded"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         )
       },
     })
 
     return columnHelper.columns([categoryCol, ...seriesCols, actionsCol])
-  }, [data, paletteColors])
+  }, [seriesStructureKey])
 
   const table = useTable({
     features: gridFeatures,
     data: data.rows,
     columns,
+    getRowId: (row) => row.id,
   })
 
   return (
-    <div className="space-y-3" data-testid="tabular-series-input">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">
-            {data.rows.length}
-          </span>{' '}
-          categories ×{' '}
-          <span className="font-semibold text-foreground">
-            {data.series.length}
-          </span>{' '}
-          series (TanStack Table v9 Grid)
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={() => setShowCsvImport((v) => !v)}
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5" />
-            {showCsvImport ? 'Close CSV Paste' : 'Paste CSV'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={handleAddSeries}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Series Column
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1"
-            onClick={handleAddRow}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Row
-          </Button>
-        </div>
-      </div>
-
-      {showCsvImport && (
-        <div className="surface-enter rounded-xl border border-border bg-muted/40 p-3 space-y-2">
-          <Label className="text-xs font-semibold">
-            Paste Comma or Tab Separated Values (First row = headers)
-          </Label>
-          <textarea
-            rows={4}
-            value={csvText}
-            onChange={(e) => setCsvText(e.target.value)}
-            placeholder={`Quarter, North America, Europe\nQ1, 120, 95\nQ2, 150, 110`}
-            className="w-full rounded-md border border-input bg-background p-2 text-xs font-mono"
-          />
-          {csvError && <p className="text-xs text-destructive">{csvError}</p>}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setShowCsvImport(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={handleApplyCsv}
-            >
-              Import into Grid
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="overflow-x-auto rounded-xl border border-border bg-card/60">
-        <table className="w-full border-collapse text-left text-xs">
+    <div className="space-y-4" data-testid="tabular-series-input">
+      {/* Primary Data Table */}
+      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
+        <table className="w-full border-collapse text-left">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr
                 key={headerGroup.id}
-                className="border-b border-border bg-muted/50"
+                className="border-b border-border/70 bg-muted/30"
               >
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-2.5 align-bottom font-medium"
+                    className="px-3 py-2.5 align-middle font-medium"
                   >
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
@@ -402,14 +363,14 @@ export function TabularSeriesInput({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-border/60">
+          <tbody className="divide-y divide-border/40">
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                className="hover:bg-muted/30 transition-colors"
+                className="hover:bg-muted/20 transition-colors"
               >
                 {row.getAllCells().map((cell) => (
-                  <td key={cell.id} className="p-2 align-middle">
+                  <td key={cell.id} className="px-3 py-2 align-middle">
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}
@@ -418,6 +379,76 @@ export function TabularSeriesInput({
           </tbody>
         </table>
       </div>
+
+      {/* Quiet Compact Table Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleAddRow}
+          >
+            <Plus className="h-4 w-4" />
+            Add Row
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleAddSeries}
+          >
+            <Plus className="h-4 w-4" />
+            Add Series
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => setShowCsvImport((v) => !v)}
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          {showCsvImport ? 'Close CSV' : 'Paste CSV'}
+        </Button>
+      </div>
+
+      {showCsvImport && (
+        <div className="surface-enter rounded-xl border border-border/70 bg-muted/25 p-4 space-y-3">
+          <Label className="text-muted-foreground">
+            Paste comma or tab-separated values (first row as headers)
+          </Label>
+          <textarea
+            rows={4}
+            value={csvText}
+            onChange={(e) => setCsvText(e.target.value)}
+            placeholder={`Quarter, North America, Europe\nQ1, 120, 95\nQ2, 150, 110`}
+            className="w-full rounded-lg border border-input bg-background p-3 font-mono"
+          />
+          {csvError && <p className="text-destructive">{csvError}</p>}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCsvImport(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleApplyCsv}
+            >
+              Import Data
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

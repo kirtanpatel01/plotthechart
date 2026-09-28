@@ -1,0 +1,161 @@
+import * as React from 'react'
+import { Link, useRouterState } from '@tanstack/react-router'
+import {
+  BarChart3,
+  FolderKanban,
+  Layers,
+  LogIn,
+  LogOut,
+  Sparkles,
+  User,
+} from 'lucide-react'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from '#/components/ui/sidebar'
+import { authClient } from '#/lib/auth-client'
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
+  const { data: session, isPending } = authClient.useSession()
+
+  return (
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border/50 bg-sidebar/50"
+      {...props}
+    >
+      <SidebarHeader className="p-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild tooltip="PlotTheChart">
+              <Link to="/" search={{}} className="no-underline">
+                <div className="flex aspect-square size-7 items-center justify-center rounded-lg bg-foreground text-background">
+                  <BarChart3 className="size-4" />
+                </div>
+                <span className="truncate font-semibold tracking-tight">
+                  PlotTheChart
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent className="px-2">
+        <SidebarGroup className="p-1.5">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/'}
+                  tooltip="Studio"
+                  className="font-medium"
+                >
+                  <Link to="/" search={{}} className="no-underline">
+                    <Sparkles />
+                    <span>Studio</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/dashboard')}
+                  tooltip="Saved Projects"
+                  className="font-medium"
+                >
+                  <Link to="/dashboard" className="no-underline">
+                    <FolderKanban />
+                    <span>Saved Projects</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/about')}
+                  tooltip="Architecture"
+                  className="font-medium"
+                >
+                  <Link to="/about" className="no-underline">
+                    <Layers />
+                    <span>Architecture</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-2 border-t border-border/40">
+        <SidebarMenu>
+          {isPending ? (
+            <SidebarMenuItem>
+              <div className="h-8 w-full rounded-md bg-sidebar-accent/40 animate-pulse" />
+            </SidebarMenuItem>
+          ) : session?.user ? (
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={session.user.name || session.user.email}
+                >
+                  <Link to="/dashboard" className="no-underline">
+                    <User className="text-muted-foreground" />
+                    <span className="truncate">
+                      {session.user.name || session.user.email}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => {
+                    void authClient.signOut()
+                  }}
+                  tooltip="Sign out"
+                  className="text-muted-foreground hover:text-foreground"
+                  data-testid="header-signout-btn"
+                >
+                  <LogOut />
+                  <span>Sign out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
+          ) : (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Sign in"
+                className="text-muted-foreground hover:text-foreground"
+                data-testid="header-signin-link"
+              >
+                <Link to="/demo/better-auth" className="no-underline">
+                  <LogIn />
+                  <span>Sign in</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+  )
+}

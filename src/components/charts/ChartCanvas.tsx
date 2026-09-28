@@ -118,8 +118,8 @@ export function ChartCanvas({
   const paletteColors =
     PALETTES[config.palette]?.colors ?? PALETTES.ocean.colors
 
-  const width = 760
-  const height = compact ? 320 : 410
+  const width = 820
+  const height = compact ? 320 : 460
 
   // Compute Legend Items based on schemaKind
   const legendItems: Array<{ id: string; label: string; color: string }> = []
@@ -1144,41 +1144,43 @@ export function ChartCanvas({
 
   return (
     <div
-      className="relative flex flex-col rounded-2xl border border-border bg-card/85 p-4 shadow-sm"
+      className={`relative flex flex-col rounded-2xl border border-border/60 bg-card ${
+        compact ? 'p-3' : 'p-6 sm:p-8'
+      }`}
       data-testid="chart-visualization-container"
       data-chart-type={chartType}
     >
       {/* Header Title & Subtitle */}
       {!compact && (
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-2 border-b border-border/60 pb-3">
-          <div>
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
             <h3
-              className="text-lg font-bold tracking-tight text-foreground"
+              className="text-xl font-semibold tracking-tight text-foreground"
               data-testid="chart-rendered-title"
             >
               {config.title || 'Untitled Visualization'}
             </h3>
             {config.subtitle && (
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-muted-foreground">
                 {config.subtitle}
               </p>
             )}
           </div>
           {tooltip && (
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-1.5 text-xs shadow-sm">
+            <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-popover px-3 py-1.5 shadow-xs">
               <span
                 className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: tooltip.color }}
               />
               <div>
-                <span className="font-semibold">{tooltip.title}</span>
+                <span className="font-medium">{tooltip.title}</span>
                 {tooltip.subtitle && (
                   <span className="text-muted-foreground">
                     {' '}
                     • {tooltip.subtitle}
                   </span>
                 )}
-                <span className="ml-2 font-mono font-bold">
+                <span className="ml-2 font-mono font-semibold">
                   {tooltip.value}
                 </span>
               </div>
@@ -1189,14 +1191,14 @@ export function ChartCanvas({
 
       {/* Top Legend */}
       {config.showLegend && config.legendPosition === 'top' && !compact && (
-        <div className="mb-2 flex flex-wrap items-center justify-center gap-4 text-xs">
+        <div className="mb-5 flex flex-wrap items-center justify-start gap-5">
           {legendItems.map((item) => (
-            <div key={item.id} className="inline-flex items-center gap-1.5">
+            <div key={item.id} className="inline-flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="font-medium text-foreground/85">
+              <span className="font-medium text-muted-foreground">
                 {item.label}
               </span>
             </div>
@@ -1205,7 +1207,7 @@ export function ChartCanvas({
       )}
 
       <div
-        className={`flex items-center gap-4 ${
+        className={`flex items-center gap-6 ${
           config.showLegend && config.legendPosition === 'right' && !compact
             ? 'flex-col lg:flex-row'
             : 'flex-col'
@@ -1225,14 +1227,14 @@ export function ChartCanvas({
 
         {/* Right Legend */}
         {config.showLegend && config.legendPosition === 'right' && !compact && (
-          <div className="flex flex-wrap lg:flex-col gap-2 border-t lg:border-t-0 lg:border-l border-border/60 pt-2 lg:pt-0 lg:pl-4 min-w-[150px] text-xs">
+          <div className="flex flex-wrap lg:flex-col gap-3 border-t lg:border-t-0 lg:border-l border-border/50 pt-4 lg:pt-0 lg:pl-6 min-w-[160px]">
             {legendItems.map((item) => (
               <div key={item.id} className="inline-flex items-center gap-2">
                 <span
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="font-medium text-foreground/85 truncate">
+                <span className="font-medium text-muted-foreground truncate">
                   {item.label}
                 </span>
               </div>
@@ -1243,14 +1245,14 @@ export function ChartCanvas({
 
       {/* Bottom Legend */}
       {config.showLegend && config.legendPosition === 'bottom' && !compact && (
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 border-t border-border/60 pt-2 text-xs">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-5 border-t border-border/40 pt-4">
           {legendItems.map((item) => (
-            <div key={item.id} className="inline-flex items-center gap-1.5">
+            <div key={item.id} className="inline-flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="font-medium text-foreground/85">
+              <span className="font-medium text-muted-foreground">
                 {item.label}
               </span>
             </div>

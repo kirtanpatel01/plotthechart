@@ -279,7 +279,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
       legendPosition: 'top',
       showGrid: true,
       showValueLabels: true,
-      palette: 'ocean',
+      palette: 'sandstone',
       options: {
         ...DEFAULT_OPTIONS,
         barLayout: 'grouped',
@@ -394,7 +394,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
       legendPosition: 'top',
       showGrid: true,
       showValueLabels: false,
-      palette: 'ocean',
+      palette: 'sandstone',
       options: {
         ...DEFAULT_OPTIONS,
         curveType: 'smooth',
@@ -582,7 +582,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
       legendPosition: 'right',
       showGrid: false,
       showValueLabels: true,
-      palette: 'ocean',
+      palette: 'sandstone',
       options: {
         ...DEFAULT_OPTIONS,
         innerRadius: 48,
@@ -598,7 +598,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
         config: {
           title: 'Renewable Energy Generation Mix',
           subtitle: 'Proportional share of clean power output by technology (GWh)',
-          palette: 'ocean',
+          palette: 'sandstone',
         },
       },
       {
@@ -746,7 +746,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
       legendPosition: 'top',
       showGrid: true,
       showValueLabels: true,
-      palette: 'ocean',
+      palette: 'sandstone',
       options: {
         ...DEFAULT_OPTIONS,
         radarGridShape: 'polygon',
@@ -762,7 +762,7 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
         config: {
           title: 'System Architecture Capability Profile',
           subtitle: 'Multivariate benchmark score comparison (0–100 scale)',
-          palette: 'ocean',
+          palette: 'sandstone',
         },
       },
     ],

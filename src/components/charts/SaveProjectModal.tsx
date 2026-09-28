@@ -125,33 +125,31 @@ export function SaveProjectModal({
         </button>
 
         {isPending ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
+          <div className="py-12 text-center text-muted-foreground">
             Checking authentication status...
           </div>
         ) : !isAuthenticated ? (
           <div className="space-y-4" data-testid="auth-prompt-step">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold">
+                <h2 className="text-lg font-bold">
                   {isSignUp
                     ? 'Create an Account to Save'
                     : 'Sign In to Save Your Chart'}
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground">
                   Your current chart data and configuration will be preserved.
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-3 pt-1">
+            <form onSubmit={handleAuthSubmit} className="space-y-4 pt-1">
               {isSignUp && (
-                <div className="space-y-1">
-                  <Label htmlFor="modal-auth-name" className="text-xs">
-                    Your Name
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="modal-auth-name">Your Name</Label>
                   <Input
                     id="modal-auth-name"
                     type="text"
@@ -159,15 +157,12 @@ export function SaveProjectModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ada Lovelace"
-                    className="h-9 text-xs"
                   />
                 </div>
               )}
 
-              <div className="space-y-1">
-                <Label htmlFor="modal-auth-email" className="text-xs">
-                  Email Address
-                </Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="modal-auth-email">Email Address</Label>
                 <Input
                   id="modal-auth-email"
                   type="email"
@@ -175,12 +170,11 @@ export function SaveProjectModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ada@example.com"
-                  className="h-9 text-xs"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="modal-auth-password" className="text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="modal-auth-password">
                   Password (min. 6 characters)
                 </Label>
                 <Input
@@ -191,12 +185,11 @@ export function SaveProjectModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-9 text-xs"
                 />
               </div>
 
               {authError && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
                   {authError}
                 </div>
               )}
@@ -223,7 +216,7 @@ export function SaveProjectModal({
                   setIsSignUp((v) => !v)
                   setAuthError('')
                 }}
-                className="text-xs font-medium text-primary hover:underline"
+                className="font-medium text-primary hover:underline"
                 data-testid="modal-auth-toggle-mode"
               >
                 {isSignUp
@@ -234,17 +227,17 @@ export function SaveProjectModal({
           </div>
         ) : (
           <div className="space-y-4" data-testid="save-details-step">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold">
+                <h2 className="text-lg font-bold">
                   {isUpdatingExisting
                     ? 'Update Saved Project'
                     : 'Save Chart Project'}
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground">
                   Signed in as{' '}
                   <span className="font-medium text-foreground">
                     {session?.user?.email}
@@ -253,23 +246,20 @@ export function SaveProjectModal({
               </div>
             </div>
 
-            <form onSubmit={handleSaveSubmit} className="space-y-3 pt-1">
-              <div className="space-y-1">
-                <Label htmlFor="save-project-name" className="text-xs">
-                  Project Name
-                </Label>
+            <form onSubmit={handleSaveSubmit} className="space-y-4 pt-1">
+              <div className="space-y-1.5">
+                <Label htmlFor="save-project-name">Project Name</Label>
                 <Input
                   id="save-project-name"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="e.g. Q4 Regional Revenue Analysis"
                   required
-                  className="h-9 text-xs"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="save-project-desc" className="text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="save-project-desc">
                   Project Notes / Description (Optional)
                 </Label>
                 <textarea
@@ -278,12 +268,12 @@ export function SaveProjectModal({
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
                   placeholder="Describe the data source, methodology, or key takeaway..."
-                  className="w-full rounded-md border border-input bg-background p-2.5 text-xs"
+                  className="w-full rounded-md border border-input bg-background p-3"
                 />
               </div>
 
               {saveError && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
                   {saveError}
                 </div>
               )}
@@ -292,14 +282,12 @@ export function SaveProjectModal({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
                   onClick={onClose}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  size="sm"
                   disabled={saving}
                   className="gap-1.5"
                   data-testid="confirm-save-project-btn"

@@ -140,33 +140,28 @@ function DashboardPage() {
                   ? 'Create an Account'
                   : 'Sign In to Your Projects Dashboard'}
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground">
                 View, reopen, edit, and manage all your saved charts.
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleInlineAuth} className="space-y-3">
+          <form onSubmit={handleInlineAuth} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-1">
-                <Label htmlFor="dash-auth-name" className="text-xs">
-                  Name
-                </Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="dash-auth-name">Name</Label>
                 <Input
                   id="dash-auth-name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ada Lovelace"
-                  className="h-9 text-xs"
                 />
               </div>
             )}
 
-            <div className="space-y-1">
-              <Label htmlFor="dash-auth-email" className="text-xs">
-                Email
-              </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="dash-auth-email">Email</Label>
               <Input
                 id="dash-auth-email"
                 type="email"
@@ -174,14 +169,11 @@ function DashboardPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ada@example.com"
-                className="h-9 text-xs"
               />
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="dash-auth-password" className="text-xs">
-                Password
-              </Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="dash-auth-password">Password</Label>
               <Input
                 id="dash-auth-password"
                 type="password"
@@ -190,12 +182,11 @@ function DashboardPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-9 text-xs"
               />
             </div>
 
             {authError && (
-              <p className="rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+              <p className="rounded-lg bg-destructive/10 p-2.5 text-destructive">
                 {authError}
               </p>
             )}
@@ -214,7 +205,7 @@ function DashboardPage() {
             </Button>
           </form>
 
-          <div className="flex items-center justify-between border-t border-border pt-3 text-xs">
+          <div className="flex items-center justify-between border-t border-border pt-3">
             <button
               type="button"
               onClick={() => {
@@ -250,22 +241,22 @@ function DashboardPage() {
 
   return (
     <main
-      className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 space-y-6"
+      className="w-full px-5 py-6 sm:px-8 lg:px-10 space-y-8"
       data-testid="projects-dashboard"
     >
       {/* Dashboard Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card/90 p-6 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <FolderKanban className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">
-              Saved Charts &amp; Projects Dashboard
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Saved Projects
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground">
               Signed in as{' '}
-              <span className="font-semibold text-foreground">
+              <span className="font-medium text-foreground">
                 {activeUser?.email}
               </span>{' '}
               • {projects.length} saved{' '}
@@ -277,7 +268,7 @@ function DashboardPage() {
         <Link
           to="/"
           search={{}}
-          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground no-underline shadow-xs hover:opacity-90 transition-opacity"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline shadow-xs hover:opacity-90 transition-opacity"
           data-testid="create-new-project-link"
         >
           <FilePlus2 className="h-4 w-4" />
@@ -293,7 +284,7 @@ function DashboardPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search saved projects by name or title..."
-            className="h-9 pl-9 text-xs"
+            className="pl-9"
           />
         </div>
 
@@ -301,7 +292,7 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setFilterType('all')}
-            className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${
               filterType === 'all'
                 ? 'border-primary bg-primary/10 text-primary font-semibold'
                 : 'border-border bg-card text-muted-foreground hover:text-foreground'
@@ -316,7 +307,7 @@ function DashboardPage() {
                 key={ct.type}
                 type="button"
                 onClick={() => setFilterType(ct.type)}
-                className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${
                   filterType === ct.type
                     ? 'border-primary bg-primary/10 text-primary font-semibold'
                     : 'border-border bg-card text-muted-foreground hover:text-foreground'
@@ -335,12 +326,12 @@ function DashboardPage() {
           className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center space-y-3"
           data-testid="empty-projects-state"
         >
-          <p className="text-base font-bold">
+          <p className="text-lg font-semibold">
             {projects.length === 0
               ? 'No saved chart projects yet'
               : 'No projects match your current filter'}
           </p>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+          <p className="text-muted-foreground max-w-md mx-auto">
             {projects.length === 0
               ? 'Head to the Studio to enter data, generate a visualization, configure chart options, and save it to your dashboard.'
               : 'Try clearing your search query or selecting All Types.'}
@@ -349,7 +340,7 @@ function DashboardPage() {
             <Link
               to="/"
               search={{}}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground no-underline"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline"
             >
               <FilePlus2 className="h-4 w-4" />
               Open Chart Studio
@@ -358,7 +349,7 @@ function DashboardPage() {
         </div>
       ) : (
         <div
-          className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3"
           data-testid="saved-projects-grid"
         >
           {filteredProjects.map((project) => {
@@ -366,25 +357,22 @@ function DashboardPage() {
             return (
               <article
                 key={project.id}
-                className="stagger-item flex flex-col justify-between rounded-2xl border border-border bg-card/90 p-4 shadow-xs transition-[transform,border-color,box-shadow,opacity] duration-[200ms] ease-[var(--ease-out)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-primary/40 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
+                className="stagger-item flex flex-col justify-between rounded-2xl border border-border bg-card/90 p-5 shadow-xs transition-[transform,border-color,box-shadow,opacity] duration-[200ms] ease-[var(--ease-out)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-primary/40 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
                 data-testid={`project-card-${project.id}`}
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                           {def.label}
                         </span>
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          {def.schemaBadgeLabel}
-                        </span>
                       </div>
-                      <h2 className="text-base font-bold truncate">
+                      <h2 className="text-lg font-semibold truncate">
                         {project.name}
                       </h2>
                       {project.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                        <p className="text-muted-foreground line-clamp-2 mt-1">
                           {project.description}
                         </p>
                       )}
@@ -405,7 +393,7 @@ function DashboardPage() {
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
                   <span
                     suppressHydrationWarning
-                    className="text-[11px] text-muted-foreground"
+                    className="text-xs text-muted-foreground"
                   >
                     Updated{' '}
                     {new Date(project.updatedAt).toLocaleDateString(undefined, {
@@ -420,7 +408,7 @@ function DashboardPage() {
                     <Link
                       to="/"
                       search={{ projectId: project.id }}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground no-underline hover:opacity-90 transition-opacity"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 font-medium text-primary-foreground no-underline hover:opacity-90 transition-opacity"
                       data-testid={`open-project-btn-${project.id}`}
                     >
                       <Edit3 className="h-3.5 w-3.5" />
@@ -431,26 +419,25 @@ function DashboardPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 px-2.5 text-xs"
                       title="Duplicate project"
                       disabled={duplicateMutation.isPending}
                       onClick={() => duplicateMutation.mutate(project.id)}
                       data-testid={`duplicate-project-btn-${project.id}`}
                     >
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="h-4 w-4" />
                     </Button>
 
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10"
                       title="Delete project"
                       disabled={deleteMutation.isPending}
                       onClick={() => deleteMutation.mutate(project.id)}
                       data-testid={`delete-project-btn-${project.id}`}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
