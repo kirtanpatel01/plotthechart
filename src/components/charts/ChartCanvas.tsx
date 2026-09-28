@@ -127,7 +127,7 @@ export function ChartCanvas({
     data.series.forEach((s, idx) => {
       legendItems.push({
         id: s.id,
-        label: s.name,
+        label: s.name || `Series ${idx + 1}`,
         color: s.color || paletteColors[idx % paletteColors.length],
       })
     })
@@ -135,7 +135,7 @@ export function ChartCanvas({
     data.slices.forEach((s, idx) => {
       legendItems.push({
         id: s.id,
-        label: s.label,
+        label: s.label || `Segment ${idx + 1}`,
         color: s.color || paletteColors[idx % paletteColors.length],
       })
     })
@@ -143,7 +143,7 @@ export function ChartCanvas({
     data.groups.forEach((g, idx) => {
       legendItems.push({
         id: g.id,
-        label: g.name,
+        label: g.name || `Cluster ${idx + 1}`,
         color: g.color || paletteColors[idx % paletteColors.length],
       })
     })
@@ -151,7 +151,7 @@ export function ChartCanvas({
     data.branches.forEach((b, idx) => {
       legendItems.push({
         id: b.id,
-        label: b.name,
+        label: b.name || `Group ${idx + 1}`,
         color: b.color || paletteColors[idx % paletteColors.length],
       })
     })
@@ -242,7 +242,7 @@ export function ChartCanvas({
                     dominantBaseline="middle"
                     className="fill-current text-[11px] font-medium opacity-80"
                   >
-                    {row.category}
+                    {row.category || `Row ${idx + 1}`}
                   </text>
                 </g>
               )
@@ -259,7 +259,7 @@ export function ChartCanvas({
                 return {
                   ...polarToCartesian(cx, cy, r, angle),
                   val,
-                  category: row.category,
+                  category: row.category || `Row ${rIdx + 1}`,
                 }
               })
               const polyPoints = vertices
@@ -284,11 +284,11 @@ export function ChartCanvas({
                         fill={color}
                         stroke="#fff"
                         strokeWidth={1.5}
-                        className="cursor-pointer transition-transform hover:scale-125"
+                        className="cursor-pointer transition-opacity hover:opacity-80"
                         onMouseEnter={() =>
                           setTooltip({
                             title: v.category,
-                            subtitle: s.name,
+                            subtitle: s.name || `Series ${sIdx + 1}`,
                             value: v.val.toLocaleString(),
                             color,
                           })
@@ -707,7 +707,7 @@ export function ChartCanvas({
                             fill={color}
                             stroke="#fff"
                             strokeWidth={1.75}
-                            className="cursor-pointer transition-transform hover:scale-125"
+                            className="cursor-pointer transition-opacity hover:opacity-80"
                             onMouseEnter={() =>
                               setTooltip({
                                 title: p.category,
@@ -758,8 +758,10 @@ export function ChartCanvas({
         <g>
           {sliceData.slices.map((s, idx) => {
             const val = Math.max(0, Number(s.value) || 0)
-            const share = total > 0 ? val / total : 0
-            const sweep = share * 360
+            const actualShare = total > 0 ? val / total : 0
+            const visualShare =
+              total > 0 ? actualShare : 1 / Math.max(1, sliceData.slices.length)
+            const sweep = visualShare * 360
             const startA = cursorAngle + padAngle / 2
             const endA = cursorAngle + Math.max(padAngle / 2 + 0.5, sweep - padAngle / 2)
             const midAngle = cursorAngle + sweep / 2
@@ -767,6 +769,7 @@ export function ChartCanvas({
 
             const color =
               s.color || paletteColors[idx % paletteColors.length] || '#0ea5e9'
+            const sliceLabel = s.label || `Segment ${idx + 1}`
             const d = describeArcSlice(cx, cy, outerR, innerR, startA, endA)
             const labelPos = polarToCartesian(
               cx,
@@ -780,18 +783,20 @@ export function ChartCanvas({
                 <path
                   d={d}
                   fill={color}
+                  fillOpacity={total > 0 ? 1 : 0.28}
                   className="cursor-pointer transition-opacity hover:opacity-85"
                   onMouseEnter={() =>
                     setTooltip({
-                      title: s.label,
-                      subtitle: s.note || `${(share * 100).toFixed(1)}% share`,
-                      value: `${val.toLocaleString()} ${sliceData.unitLabel}`,
+                      title: sliceLabel,
+                      subtitle:
+                        s.note || `${(actualShare * 100).toFixed(1)}% share`,
+                      value: `${val.toLocaleString()} ${sliceData.unitLabel}`.trim(),
                       color,
                     })
                   }
                   onMouseLeave={() => setTooltip(null)}
                 />
-                {config.showValueLabels && share >= 0.04 && (
+                {config.showValueLabels && actualShare >= 0.04 && (
                   <text
                     x={labelPos.x}
                     y={labelPos.y}
@@ -799,7 +804,7 @@ export function ChartCanvas({
                     dominantBaseline="middle"
                     className="fill-current text-[11px] font-medium opacity-85"
                   >
-                    {s.label} ({(share * 100).toFixed(1)}%)
+                    {sliceLabel} ({(actualShare * 100).toFixed(1)}%)
                   </text>
                 )}
               </g>
@@ -962,7 +967,7 @@ export function ChartCanvas({
             />
           )}
 
-          {pts.map((pt) => {
+          {pts.map((pt, idx) => {
             const grpIdx = Math.max(
               0,
               coordData.groups.findIndex((g) => g.id === pt.groupId),
@@ -975,8 +980,9 @@ export function ChartCanvas({
             const cx = scaleX(pt.x)
             const cy = scaleY(pt.y)
             const radius = config.options.enableBubbleSize
-              ? Math.max(5, Math.min(28, pt.size * 0.55))
+              ? Math.max(5, Math.min(28, (pt.size || 10) * 0.55))
               : 7
+            const pointLabel = pt.label || `Point ${idx + 1}`
 
             return (
               <g key={pt.id}>
@@ -988,10 +994,10 @@ export function ChartCanvas({
                   fillOpacity={0.72}
                   stroke={color}
                   strokeWidth={2}
-                  className="cursor-pointer transition-transform hover:scale-110"
+                  className="cursor-pointer transition-opacity hover:opacity-100"
                   onMouseEnter={() =>
                     setTooltip({
-                      title: pt.label,
+                      title: pointLabel,
                       subtitle: grp?.name || 'Coordinate',
                       value: `X: ${pt.x}, Y: ${pt.y} (Weight: ${pt.size})`,
                       color,
@@ -999,7 +1005,7 @@ export function ChartCanvas({
                   }
                   onMouseLeave={() => setTooltip(null)}
                 />
-                {config.showValueLabels && (
+                {config.showValueLabels && pt.label && (
                   <text
                     x={cx}
                     y={cy - radius - 5}
@@ -1030,10 +1036,7 @@ export function ChartCanvas({
           color: b.color || paletteColors[idx % paletteColors.length],
         }
       })
-      const grandTotal = Math.max(
-        1,
-        branchesWithSums.reduce((acc, b) => acc + b.sum, 0),
-      )
+      const rawGrandTotal = branchesWithSums.reduce((acc, b) => acc + b.sum, 0)
 
       const treemapX = 24
       const treemapY = 18
@@ -1044,14 +1047,20 @@ export function ChartCanvas({
 
       return (
         <g>
-          {branchesWithSums.map((branch) => {
-            const branchShare = branch.sum / grandTotal
-            const branchW = Math.max(24, branchShare * treemapW)
+          {branchesWithSums.map((branch, bIdx) => {
+            const actualBranchShare =
+              rawGrandTotal > 0 ? branch.sum / rawGrandTotal : 0
+            const visualBranchShare =
+              rawGrandTotal > 0
+                ? actualBranchShare
+                : 1 / Math.max(1, branchesWithSums.length)
+            const branchW = Math.max(24, visualBranchShare * treemapW)
             const x0 = curX
             curX += branchW
 
             let curY = treemapY + 24
             const innerH = Math.max(20, treemapH - 24)
+            const branchLabel = branch.name || `Group ${bIdx + 1}`
 
             return (
               <g key={branch.id}>
@@ -1072,17 +1081,21 @@ export function ChartCanvas({
                   y={treemapY + 16}
                   className="fill-current text-[11px] font-bold"
                 >
-                  {branch.name} ({Math.round(branchShare * 100)}%)
+                  {branchLabel} ({Math.round(actualBranchShare * 100)}%)
                 </text>
 
-                {branch.children.map((leaf) => {
+                {branch.children.map((leaf, lIdx) => {
                   const leafVal = Math.max(0, Number(leaf.value) || 0)
-                  const leafShareOfBranch =
-                    branch.sum > 0 ? leafVal / branch.sum : 0
-                  const leafShareOfTotal = (leafVal / grandTotal) * 100
-                  const leafH = Math.max(18, leafShareOfBranch * innerH)
+                  const visualLeafShare =
+                    branch.sum > 0
+                      ? leafVal / branch.sum
+                      : 1 / Math.max(1, branch.children.length)
+                  const leafShareOfTotal =
+                    rawGrandTotal > 0 ? (leafVal / rawGrandTotal) * 100 : 0
+                  const leafH = Math.max(18, visualLeafShare * innerH)
                   const y0 = curY
                   curY += leafH
+                  const leafLabel = leaf.name || `Item ${bIdx + 1}.${lIdx + 1}`
 
                   return (
                     <g key={leaf.id}>
@@ -1093,12 +1106,12 @@ export function ChartCanvas({
                         height={Math.max(4, leafH - 4)}
                         rx={6}
                         fill={branch.color}
-                        fillOpacity={0.78}
+                        fillOpacity={rawGrandTotal > 0 ? 0.78 : 0.25}
                         className="cursor-pointer transition-opacity hover:opacity-95"
                         onMouseEnter={() =>
                           setTooltip({
-                            title: leaf.name,
-                            subtitle: `${branch.name} (${leafShareOfTotal.toFixed(1)}% of total)`,
+                            title: leafLabel,
+                            subtitle: `${branchLabel} (${leafShareOfTotal.toFixed(1)}% of total)`,
                             value: leafVal.toLocaleString(),
                             color: branch.color,
                           })
@@ -1112,7 +1125,7 @@ export function ChartCanvas({
                           fill="#ffffff"
                           className="text-[11px] font-semibold pointer-events-none"
                         >
-                          {leaf.name}
+                          {leafLabel}
                         </text>
                       )}
                       {config.showValueLabels && branchW > 70 && leafH > 42 && (
@@ -1152,40 +1165,40 @@ export function ChartCanvas({
     >
       {/* Header Title & Subtitle */}
       {!compact && (
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h3
-              className="text-xl font-semibold tracking-tight text-foreground"
-              data-testid="chart-rendered-title"
-            >
-              {config.title || 'Untitled Visualization'}
-            </h3>
-            {config.subtitle && (
-              <p className="text-muted-foreground">
-                {config.subtitle}
-              </p>
-            )}
-          </div>
-          {tooltip && (
-            <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-popover px-3 py-1.5 shadow-xs">
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: tooltip.color }}
-              />
-              <div>
-                <span className="font-medium">{tooltip.title}</span>
-                {tooltip.subtitle && (
-                  <span className="text-muted-foreground">
-                    {' '}
-                    • {tooltip.subtitle}
-                  </span>
-                )}
-                <span className="ml-2 font-mono font-semibold">
-                  {tooltip.value}
-                </span>
-              </div>
-            </div>
+        <div className="mb-6 flex flex-col justify-start">
+          <h3
+            className="text-xl font-semibold tracking-tight text-foreground pr-44"
+            data-testid="chart-rendered-title"
+          >
+            {config.title || 'Untitled Visualization'}
+          </h3>
+          {config.subtitle && (
+            <p className="text-muted-foreground pr-44">
+              {config.subtitle}
+            </p>
           )}
+        </div>
+      )}
+
+      {/* Floating Hover Tooltip (Absolute, Zero Layout Shift) */}
+      {!compact && tooltip && (
+        <div className="animate-in fade-in zoom-in-95 duration-150 pointer-events-none absolute right-6 sm:right-8 top-6 sm:top-8 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-popover/95 px-3 py-1.5 shadow-md backdrop-blur-xs">
+          <span
+            className="h-2.5 w-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: tooltip.color }}
+          />
+          <div className="text-xs sm:text-sm">
+            <span className="font-medium">{tooltip.title}</span>
+            {tooltip.subtitle && (
+              <span className="text-muted-foreground">
+                {' '}
+                • {tooltip.subtitle}
+              </span>
+            )}
+            <span className="ml-2 font-mono font-semibold">
+              {tooltip.value}
+            </span>
+          </div>
         </div>
       )}
 

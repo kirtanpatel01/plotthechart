@@ -4,9 +4,11 @@ import { useServerFn } from '@tanstack/react-start'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   BarChart3,
+  Check,
   CheckCircle2,
   ChevronDown,
   Code2,
+  Copy,
   Download,
   FilePlus2,
   GitBranch,
@@ -18,7 +20,7 @@ import {
   Save,
   ScatterChart,
   SlidersHorizontal,
-  Sparkles,
+  X,
 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import {
@@ -33,6 +35,7 @@ import type {
   ChartTypeId,
   DataSchemaKind,
 } from '#/lib/charts/types'
+import { ScrollArea } from '#/components/ui/scroll-area'
 import { ChartCanvas } from './ChartCanvas'
 import { ChartConfigPanel } from './ChartConfigPanel'
 import { SaveProjectModal } from './SaveProjectModal'
@@ -65,16 +68,21 @@ const DRAFT_STORAGE_KEY = 'plotthechart.studio.draft.v1'
 
 interface ChartStudioProps {
   initialProject?: SerializedChartProject | null
+  initialChartType?: ChartTypeId
 }
 
-export function ChartStudio({ initialProject }: ChartStudioProps) {
+export function ChartStudio({
+  initialProject,
+  initialChartType,
+}: ChartStudioProps) {
   const router = useRouter()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const saveProjectServerFn = useServerFn(saveChartProjectFn)
   const svgRef = useRef<SVGSVGElement | null>(null)
 
-  const initialType: ChartTypeId = initialProject?.chartType ?? 'bar'
+  const initialType: ChartTypeId =
+    initialProject?.chartType ?? initialChartType ?? 'bar'
   const initialDef = getChartDefinition(initialType)
 
   const [chartType, setChartType] = useState<ChartTypeId>(initialType)
@@ -114,7 +122,7 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
     name: string
   } | null>(null)
   const [showRawJson, setShowRawJson] = useState(false)
-  const [showPresetsMenu, setShowPresetsMenu] = useState(false)
+  const [copiedJson, setCopiedJson] = useState(false)
   const [showChartSettings, setShowChartSettings] = useState(false)
 
   // Synchronize state when navigating to a different ?projectId=...
@@ -204,7 +212,6 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
         ...prev.options,
       },
     }))
-    setShowPresetsMenu(false)
     setSaveSuccessBanner(null)
   }
 
@@ -217,17 +224,6 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
     setSaveSuccessBanner(null)
   }
 
-  const handleLoadPreset = (presetId: string) => {
-    const preset = currentDef.presets.find((p) => p.id === presetId)
-    if (!preset) return
-    handleDataChange(structuredClone(preset.data))
-    setConfig((prev) => ({
-      ...prev,
-      ...preset.config,
-    }))
-    setShowPresetsMenu(false)
-  }
-
   const handleGenerateChart = () => {
     setHasGenerated(true)
     setGenerationCount((c) => c + 1)
@@ -236,16 +232,25 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
 
   const handleNewBlankChart = () => {
     const def = getChartDefinition('bar')
+    const freshData = def.defaultData()
     setActiveProjectId(undefined)
     setChartType('bar')
-    setData(def.defaultData())
+    setData(freshData)
+    setSchemaDrafts({ [freshData.schemaKind]: freshData })
     setConfig(def.defaultConfig())
     setProjectName('')
     setProjectDescription('')
     setHasGenerated(false)
     setGenerationCount(0)
     setSaveSuccessBanner(null)
-    void navigate({ to: '/', search: {} })
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY)
+      } catch {
+        // Ignore storage errors
+      }
+    }
+    void navigate({ to: '/studio', search: {} })
   }
 
   const handleExportSvg = () => {
@@ -286,14 +291,14 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
     await queryClient.invalidateQueries({ queryKey: ['chart-projects'] })
     await router.invalidate()
     void navigate({
-      to: '/',
+      to: '/studio',
       search: { projectId: saved.id },
       replace: true,
     })
   }
 
   return (
-    <div className="w-full px-5 py-6 sm:px-8 lg:px-10 space-y-8">
+    <div className="w-full p-4 space-y-8">
       {/* Simplified Top Workspace Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
         <div className="min-w-0">
@@ -321,16 +326,6 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
               New
             </Button>
           )}
-
-          <Button
-            type="button"
-            variant={hasGenerated ? 'outline' : 'default'}
-            onClick={handleGenerateChart}
-            data-testid="toolbar-generate-chart-btn"
-          >
-            <Play className="h-4 w-4" />
-            {hasGenerated ? 'Refresh Preview' : 'Generate Chart'}
-          </Button>
 
           {hasGenerated ? (
             <Button
@@ -360,7 +355,7 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
       {/* Save Confirmation Banner */}
       {saveSuccessBanner && (
         <div
-          className="surface-enter flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-950 dark:text-emerald-200"
+          className="animate-in fade-in zoom-in-95 duration-200 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-950 dark:text-emerald-200"
           data-testid="save-success-banner"
         >
           <div className="flex items-center gap-2">
@@ -393,39 +388,8 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
                 Data
               </h2>
 
-              {/* Secondary Data Toolbar: Sample Datasets & Schema JSON */}
+              {/* Secondary Data Toolbar: Schema JSON */}
               <div className="relative flex items-center gap-1.5">
-                {currentDef.presets.length > 0 && (
-                  <div className="relative">
-                    <Button
-                      type="button"
-                      variant={showPresetsMenu ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => setShowPresetsMenu((v) => !v)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      Samples
-                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                    </Button>
-
-                    {showPresetsMenu && (
-                      <div className="surface-enter absolute right-0 top-10 z-20 min-w-52 rounded-xl border border-border bg-popover p-1.5 shadow-md">
-                        {currentDef.presets.map((preset) => (
-                          <button
-                            key={preset.id}
-                            type="button"
-                            onClick={() => handleLoadPreset(preset.id)}
-                            className="flex w-full items-center rounded-lg px-3 py-2 text-left font-medium text-foreground hover:bg-muted transition-colors"
-                          >
-                            {preset.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <Button
                   type="button"
                   variant={showRawJson ? 'secondary' : 'ghost'}
@@ -477,22 +441,53 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
 
           {/* Raw JSON Schema Inspector (Progressive Disclosure) */}
           {showRawJson && (
-            <div className="surface-enter rounded-xl border border-border/70 bg-muted/20 p-4 space-y-2">
-              <div className="flex items-center justify-between text-muted-foreground">
+            <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-4 space-y-2">
+              <div className="flex items-center justify-between text-muted-foreground text-sm">
                 <span>
-                  Schema: <code className="text-foreground">{data.schemaKind}</code>
+                  Schema: <code className="text-foreground font-mono">{data.schemaKind}</code>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setShowRawJson(false)}
-                  className="hover:text-foreground"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+                      setCopiedJson(true)
+                      setTimeout(() => setCopiedJson(false), 2000)
+                    }}
+                    title="Copy JSON to clipboard"
+                  >
+                    {copiedJson ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500 mr-1" />
+                        <span className="text-emerald-500 font-medium">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 mr-1" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowRawJson(false)}
+                    aria-label="Close JSON inspector"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <pre className="max-h-48 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100 font-mono">
-                {JSON.stringify(data, null, 2)}
-              </pre>
+              <ScrollArea className="h-48 w-full rounded-lg bg-slate-950 p-3">
+                <pre className="text-xs text-slate-100 font-mono pr-2">
+                  {JSON.stringify(data, null, 2)}
+                </pre>
+              </ScrollArea>
             </div>
           )}
 
@@ -637,7 +632,7 @@ export function ChartStudio({ initialProject }: ChartStudioProps) {
 
           {/* Collapsible Chart Configuration Drawer / Section (Progressive Disclosure) */}
           {showChartSettings && (
-            <div className="surface-enter rounded-2xl border border-border/70 bg-card/60 p-5 sm:p-6">
+            <div className="animate-in fade-in zoom-in-95 duration-200 rounded-2xl border border-border/70 bg-card/60 p-5 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-semibold text-foreground">
                   Chart Settings &amp; Styling

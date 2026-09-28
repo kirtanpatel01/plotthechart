@@ -39,12 +39,12 @@ export type PaletteId = keyof typeof PALETTES
 
 export const TabularSeriesDataSchema = z.object({
   schemaKind: z.literal('tabular-series'),
-  categoryLabel: z.string().default('Category'),
+  categoryLabel: z.string().default(''),
   series: z
     .array(
       z.object({
         id: z.string(),
-        name: z.string().min(1),
+        name: z.string(),
         color: z.string().optional(),
       }),
     )
@@ -64,7 +64,7 @@ export type TabularSeriesData = z.infer<typeof TabularSeriesDataSchema>
 
 export const ProportionalSlicesDataSchema = z.object({
   schemaKind: z.literal('proportional-slices'),
-  unitLabel: z.string().default('Units'),
+  unitLabel: z.string().default(''),
   slices: z
     .array(
       z.object({
@@ -101,7 +101,7 @@ export const CoordinatePointsDataSchema = z.object({
         groupId: z.string(),
         x: z.number(),
         y: z.number(),
-        size: z.number().min(1).max(100).default(12),
+        size: z.number().min(0).max(100).default(0),
       }),
     )
     .min(1),

@@ -3,6 +3,14 @@ import { Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { ScrollArea, ScrollBar } from '#/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { PALETTES } from '#/lib/charts/types'
 import type { CoordinatePointsData, PaletteId } from '#/lib/charts/types'
 
@@ -71,11 +79,11 @@ export function CoordinatePointsInput({
         ...data.points,
         {
           id: `pt-${Date.now()}-${idx}`,
-          label: `Point P${idx}`,
+          label: '',
           groupId: defaultGroup.id,
-          x: Math.round(20 + idx * 8),
-          y: Math.round(50 + idx * 5),
-          size: 18,
+          x: 0,
+          y: 0,
+          size: 0,
         },
       ],
     })
@@ -116,7 +124,7 @@ export function CoordinatePointsInput({
   return (
     <div className="space-y-4" data-testid="coordinate-points-input">
       {/* Primary Coordinate Points Table */}
-      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
+      <ScrollArea className="w-full rounded-xl border border-border/70 bg-card">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-border/70 bg-muted/30 font-semibold text-muted-foreground">
@@ -153,7 +161,7 @@ export function CoordinatePointsInput({
                         onChange={(e) =>
                           handlePointChange(pt.id, { label: e.target.value })
                         }
-                        placeholder="Point label"
+                        placeholder={`Point ${idx + 1}`}
                         aria-label={`Point ${idx + 1} label`}
                         className="border-transparent bg-transparent px-2 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                       />
@@ -161,31 +169,43 @@ export function CoordinatePointsInput({
                   </td>
 
                   <td className="px-3.5 py-2 align-middle">
-                    <select
+                    <Select
                       value={pt.groupId}
-                      onChange={(e) =>
-                        handlePointChange(pt.id, { groupId: e.target.value })
+                      onValueChange={(val) =>
+                        handlePointChange(pt.id, { groupId: val })
                       }
-                      aria-label={`Point ${idx + 1} cluster`}
-                      className="h-9 w-full rounded-md border border-transparent bg-transparent px-2 hover:border-border/60 focus:border-ring focus:bg-background"
                     >
-                      {data.groups.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger
+                        aria-label={`Point ${idx + 1} cluster`}
+                        className="w-full border-transparent bg-transparent px-2 shadow-none hover:border-border/60 focus:border-ring focus:bg-background dark:bg-transparent dark:hover:bg-transparent"
+                      >
+                        <SelectValue placeholder="Select cluster" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {data.groups.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
 
                   <td className="px-3.5 py-2 align-middle">
                     <Input
                       type="number"
                       step="any"
-                      value={pt.x}
+                      placeholder="0"
+                      value={pt.x === 0 ? '' : pt.x}
                       onChange={(e) => {
                         const n = Number(e.target.value)
                         handlePointChange(pt.id, {
-                          x: Number.isFinite(n) ? n : 0,
+                          x:
+                            e.target.value === ''
+                              ? 0
+                              : Number.isFinite(n)
+                                ? n
+                                : 0,
                         })
                       }}
                       aria-label={`Point ${idx + 1} X coordinate`}
@@ -197,11 +217,17 @@ export function CoordinatePointsInput({
                     <Input
                       type="number"
                       step="any"
-                      value={pt.y}
+                      placeholder="0"
+                      value={pt.y === 0 ? '' : pt.y}
                       onChange={(e) => {
                         const n = Number(e.target.value)
                         handlePointChange(pt.id, {
-                          y: Number.isFinite(n) ? n : 0,
+                          y:
+                            e.target.value === ''
+                              ? 0
+                              : Number.isFinite(n)
+                                ? n
+                                : 0,
                         })
                       }}
                       aria-label={`Point ${idx + 1} Y coordinate`}
@@ -212,15 +238,19 @@ export function CoordinatePointsInput({
                   <td className="px-3.5 py-2 align-middle">
                     <Input
                       type="number"
-                      min={1}
+                      min={0}
                       max={100}
-                      value={pt.size}
+                      placeholder="0"
+                      value={pt.size === 0 ? '' : pt.size}
                       onChange={(e) => {
                         const n = Number(e.target.value)
                         handlePointChange(pt.id, {
-                          size: Number.isFinite(n)
-                            ? Math.min(100, Math.max(1, n))
-                            : 10,
+                          size:
+                            e.target.value === ''
+                              ? 0
+                              : Number.isFinite(n)
+                                ? Math.min(100, Math.max(0, n))
+                                : 0,
                         })
                       }}
                       aria-label={`Point ${idx + 1} bubble size`}
@@ -244,7 +274,8 @@ export function CoordinatePointsInput({
             })}
           </tbody>
         </table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       {/* Quiet Compact Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
@@ -286,7 +317,7 @@ export function CoordinatePointsInput({
 
       {/* Collapsible Cluster / Cohort Manager */}
       {showClusters && (
-        <div className="surface-enter rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
+        <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label className="text-muted-foreground">
               Clusters / Cohorts

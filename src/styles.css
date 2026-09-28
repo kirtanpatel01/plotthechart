@@ -65,25 +65,6 @@
   --shadow-xl: 0rem 0.25rem 0.5rem 0rem hsl(240 9.8039% 10% / 0.10), 0rem 8px 10px -1px hsl(240 9.8039% 10% / 0.10);
   --shadow-2xl: 0rem 0.25rem 0.5rem 0rem hsl(240 9.8039% 10% / 0.25);
   --tracking-normal: -0.025em;
-
-  /* Map legacy utility variables to Sandstone theme tokens */
-  --sea-ink: var(--foreground);
-  --sea-ink-soft: var(--muted-foreground);
-  --lagoon: var(--primary);
-  --lagoon-deep: var(--primary);
-  --palm: var(--primary);
-  --sand: var(--secondary);
-  --foam: var(--muted);
-  --surface: color-mix(in oklab, var(--card) 86%, transparent);
-  --surface-strong: var(--card);
-  --line: var(--border);
-  --inset-glint: rgba(255, 255, 255, 0.7);
-  --kicker: var(--primary);
-  --bg-base: var(--background);
-  --header-bg: color-mix(in oklab, var(--background) 88%, transparent);
-  --chip-bg: var(--card);
-  --chip-line: var(--border);
-  --link-bg-hover: var(--muted);
   --hero-a: color-mix(in oklab, var(--accent) 18%, transparent);
   --hero-b: color-mix(in oklab, var(--secondary) 50%, transparent);
 }
@@ -141,25 +122,6 @@
   --shadow-lg: 0rem 0.3rem 0.6rem 0rem hsl(218.1818 21.5686% 10% / 0.60), 0rem 4px 6px -1px hsl(218.1818 21.5686% 10% / 0.60);
   --shadow-xl: 0rem 0.3rem 0.6rem 0rem hsl(218.1818 21.5686% 10% / 0.60), 0rem 8px 10px -1px hsl(218.1818 21.5686% 10% / 0.60);
   --shadow-2xl: 0rem 0.3rem 0.6rem 0rem hsl(218.1818 21.5686% 10% / 1.50);
-
-  /* Map legacy utility variables to Sandstone dark theme tokens */
-  --sea-ink: var(--foreground);
-  --sea-ink-soft: var(--muted-foreground);
-  --lagoon: var(--accent);
-  --lagoon-deep: var(--accent);
-  --palm: var(--accent);
-  --sand: var(--secondary);
-  --foam: var(--muted);
-  --surface: color-mix(in oklab, var(--card) 86%, transparent);
-  --surface-strong: var(--card);
-  --line: var(--border);
-  --inset-glint: rgba(255, 255, 255, 0.06);
-  --kicker: var(--accent);
-  --bg-base: var(--background);
-  --header-bg: color-mix(in oklab, var(--background) 86%, transparent);
-  --chip-bg: var(--card);
-  --chip-line: var(--border);
-  --link-bg-hover: var(--muted);
   --hero-a: color-mix(in oklab, var(--accent) 12%, transparent);
   --hero-b: color-mix(in oklab, var(--secondary) 24%, transparent);
 }
@@ -266,6 +228,27 @@ button,
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+button:not(:disabled):active,
+[role='button']:not(:disabled):active,
+[role='radio']:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+a {
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 160ms var(--ease-out);
 }
 
 body {
@@ -282,7 +265,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
+a:not([class*='bg-']):not([role='button']) {
   color: var(--primary);
   text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
   text-decoration-thickness: 1px;
@@ -290,7 +273,7 @@ a {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  a:hover {
+  a:not([class*='bg-']):not([role='button']):hover {
     color: var(--accent-foreground);
   }
 }
@@ -313,213 +296,7 @@ pre code {
   color: inherit;
 }
 
-.prose pre {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  color: var(--card-foreground);
-}
-
-.page-wrap {
-  width: min(1080px, calc(100% - 2rem));
-  margin-inline: auto;
-}
-
-.display-title {
-  font-family: var(--font-serif);
-  letter-spacing: -0.02em;
-  font-optical-sizing: auto;
-}
-
-.island-shell {
-  border: 1px solid var(--border);
-  background: var(--card);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(4px);
-}
-
-.feature-card {
-  background: var(--card);
-  box-shadow: var(--shadow-xs);
-  transition:
-    transform 200ms var(--ease-out),
-    border-color 200ms ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .feature-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
-  }
-}
-
-button,
-[role='button'],
-[role='radio'] {
-  transition:
-    transform 160ms var(--ease-out),
-    background-color 180ms ease,
-    color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    opacity 180ms ease;
-}
-
-button:not(:disabled):active,
-[role='button']:not(:disabled):active,
-[role='radio']:not(:disabled):active {
-  transform: scale(0.97);
-}
-
-.island-shell,
-a {
-  transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    border-color 180ms ease,
-    transform 160ms var(--ease-out);
-}
-
-.island-kicker {
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: 0.69rem;
-  color: var(--primary);
-}
-
-.nav-link {
-  position: relative;
-  text-decoration: none;
-  color: var(--muted-foreground);
-}
-
-.nav-link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 100%;
-  height: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  transition: transform 180ms var(--ease-out);
-}
-
-.nav-link.is-active {
-  color: var(--foreground);
-}
-
-.nav-link.is-active::after {
-  transform: scaleX(1);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .nav-link:hover {
-    color: var(--foreground);
-  }
-
-  .nav-link:hover::after {
-    transform: scaleX(1);
-  }
-}
-
-/* Modal & conditional surface entrances using @starting-style (never scale(0)) */
-.modal-backdrop {
-  opacity: 1;
-  transition: opacity 220ms var(--ease-out);
-
-  @starting-style {
-    opacity: 0;
-  }
-}
-
-.modal-surface {
-  transform-origin: center;
-  opacity: 1;
-  transform: scale(1);
-  transition:
-    opacity 220ms var(--ease-out),
-    transform 220ms var(--ease-out);
-
-  @starting-style {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-}
-
-.surface-enter {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  transition:
-    opacity 200ms var(--ease-out),
-    transform 200ms var(--ease-out);
-
-  @starting-style {
-    opacity: 0;
-    transform: scale(0.97) translateY(-4px);
-  }
-}
-
-.rise-in {
-  animation: rise-in 260ms var(--ease-out) both;
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Staggered group entrance for occasional views (Dashboard & Architecture cards) */
-.stagger-item {
-  opacity: 0;
-  transform: translateY(8px);
-  animation: stagger-fade-in 260ms var(--ease-out) forwards;
-}
-
-.stagger-item:nth-child(1) {
-  animation-delay: 0ms;
-}
-.stagger-item:nth-child(2) {
-  animation-delay: 45ms;
-}
-.stagger-item:nth-child(3) {
-  animation-delay: 90ms;
-}
-.stagger-item:nth-child(4) {
-  animation-delay: 135ms;
-}
-.stagger-item:nth-child(5) {
-  animation-delay: 180ms;
-}
-.stagger-item:nth-child(n + 6) {
-  animation-delay: 220ms;
-}
-
-@keyframes stagger-fade-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Accessibility: Reduced motion & reduced transparency (gentler, not zero) */
 @media (prefers-reduced-motion: reduce) {
-  .rise-in,
-  .stagger-item {
-    animation: reduced-fade 200ms ease forwards;
-    transform: none !important;
-  }
-
-  .modal-surface,
-  .surface-enter,
   button:not(:disabled):active,
   [role='button']:not(:disabled):active,
   [role='radio']:not(:disabled):active {
@@ -527,28 +304,6 @@ a {
       border-color 180ms ease;
     transform: none !important;
   }
-}
-
-@keyframes reduced-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .island-shell,
-  .site-footer {
-    backdrop-filter: none;
-  }
-}
-
-.site-footer {
-  border-top: 1px solid var(--line);
-  background: color-mix(in oklab, var(--header-bg) 84%, transparent 16%);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @layer base {
@@ -559,5 +314,25 @@ a {
     background-color: var(--background);
     color: var(--foreground);
     letter-spacing: var(--tracking-normal);
+  }
+
+  /* Universal scrollbar styling matching shadcn ScrollArea thumb and track */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }

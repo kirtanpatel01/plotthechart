@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Laptop, Moon, Sun } from 'lucide-react'
+import { Button } from '#/components/ui/button'
 
 type ThemeMode = 'light' | 'dark' | 'auto'
 
@@ -68,14 +70,22 @@ export default function ThemeToggle() {
       : `Theme mode: ${mode}. Click to switch mode.`
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       onClick={toggleMode}
       aria-label={label}
       title={label}
-      className="rounded-full border border-border bg-card px-3.5 py-1.5 font-medium text-foreground shadow-xs transition-[transform,background-color,border-color,color] duration-[160ms] ease-[var(--ease-out)] active:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-muted"
+      className="text-muted-foreground hover:text-foreground"
     >
-      {mode === 'auto' ? 'Auto' : mode === 'dark' ? 'Dark' : 'Light'}
-    </button>
+      {mode === 'light' ? (
+        <Sun className="h-4 w-4" />
+      ) : mode === 'dark' ? (
+        <Moon className="h-4 w-4" />
+      ) : (
+        <Laptop className="h-4 w-4" />
+      )}
+    </Button>
   )
 }

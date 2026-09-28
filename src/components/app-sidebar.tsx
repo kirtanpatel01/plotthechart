@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
-  BarChart3,
   FolderKanban,
   Layers,
   LogIn,
@@ -35,13 +34,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="border-r border-border/50 bg-sidebar/50"
       {...props}
     >
-      <SidebarHeader className="p-3">
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="PlotTheChart">
               <Link to="/" search={{}} className="no-underline">
-                <div className="flex aspect-square size-7 items-center justify-center rounded-lg bg-foreground text-background">
-                  <BarChart3 className="size-4" />
+                <div className="flex aspect-square size-8 shrink-0 items-center justify-center">
+                  <img
+                    src="/logo.png"
+                    alt="PlotTheChart"
+                    className="size-7 rounded-lg object-contain"
+                  />
                 </div>
                 <span className="truncate font-semibold tracking-tight">
                   PlotTheChart
@@ -52,18 +55,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
-        <SidebarGroup className="p-1.5">
+      <SidebarContent>
+        <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === '/'}
+                  isActive={pathname.startsWith('/studio')}
                   tooltip="Studio"
                   className="font-medium"
                 >
-                  <Link to="/" search={{}} className="no-underline">
+                  <Link to="/studio" search={{}} className="no-underline">
                     <Sparkles />
                     <span>Studio</span>
                   </Link>
@@ -102,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t border-border/40">
+      <SidebarFooter className="border-t border-border/40">
         <SidebarMenu>
           {isPending ? (
             <SidebarMenuItem>
@@ -141,11 +144,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
+                isActive={pathname.startsWith('/signin')}
                 tooltip="Sign in"
                 className="text-muted-foreground hover:text-foreground"
                 data-testid="header-signin-link"
               >
-                <Link to="/demo/better-auth" className="no-underline">
+                <Link to="/signin" className="no-underline">
                   <LogIn />
                   <span>Sign in</span>
                 </Link>

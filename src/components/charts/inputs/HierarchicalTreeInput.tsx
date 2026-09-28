@@ -48,12 +48,12 @@ export function HierarchicalTreeInput({
         ...data.branches,
         {
           id: `branch-${Date.now()}-${idx}`,
-          name: `Group ${idx}`,
+          name: '',
           children: [
             {
               id: `leaf-${Date.now()}-1`,
-              name: `Sub-item ${idx}.1`,
-              value: 150,
+              name: '',
+              value: 0,
             },
           ],
         },
@@ -81,8 +81,8 @@ export function HierarchicalTreeInput({
             ...b.children,
             {
               id: `leaf-${Date.now()}-${nextIdx}`,
-              name: `${b.name.split(' ')[0]} Node ${nextIdx}`,
-              value: 120,
+              name: '',
+              value: 0,
             },
           ],
         }
@@ -151,6 +151,7 @@ export function HierarchicalTreeInput({
                     onChange={(e) =>
                       handleBranchNameChange(branch.id, e.target.value)
                     }
+                    placeholder={`Group ${bIdx + 1}`}
                     aria-label={`Branch ${bIdx + 1} name`}
                     className="border-transparent bg-transparent px-2 font-semibold max-w-xs hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                   />
@@ -201,6 +202,7 @@ export function HierarchicalTreeInput({
                             name: e.target.value,
                           })
                         }
+                        placeholder={`Item ${bIdx + 1}.${lIdx + 1}`}
                         aria-label={`Branch ${bIdx + 1} Leaf ${lIdx + 1} name`}
                         className="flex-1 border-transparent bg-transparent px-2.5 hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                       />
@@ -208,11 +210,17 @@ export function HierarchicalTreeInput({
                         type="number"
                         min={0}
                         step="any"
-                        value={leaf.value}
+                        placeholder="0"
+                        value={leaf.value === 0 ? '' : leaf.value}
                         onChange={(e) => {
                           const n = Number(e.target.value)
                           handleLeafChange(branch.id, leaf.id, {
-                            value: Number.isFinite(n) ? Math.max(0, n) : 0,
+                            value:
+                              e.target.value === ''
+                                ? 0
+                                : Number.isFinite(n)
+                                  ? Math.max(0, n)
+                                  : 0,
                           })
                         }}
                         aria-label={`Branch ${bIdx + 1} Leaf ${lIdx + 1} value`}
@@ -257,6 +265,7 @@ export function HierarchicalTreeInput({
           <Input
             value={data.rootLabel}
             onChange={(e) => handleRootLabelChange(e.target.value)}
+            placeholder="Root hierarchy label"
             aria-label="Root hierarchy label"
             className="w-48 border-transparent bg-transparent px-2 font-medium text-right hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
           />

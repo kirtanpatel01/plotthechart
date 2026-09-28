@@ -8,6 +8,7 @@ import { FileSpreadsheet, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import { ScrollArea, ScrollBar } from '#/components/ui/scroll-area'
 import { PALETTES } from '#/lib/charts/types'
 import type { PaletteId, TabularSeriesData } from '#/lib/charts/types'
 
@@ -51,16 +52,15 @@ export function TabularSeriesInput({
   const handleAddSeries = () => {
     const nextIndex = data.series.length + 1
     const newSeriesId = `series-${Date.now()}-${nextIndex}`
-    const newSeriesName = `Series ${nextIndex}`
 
     onChange({
       ...data,
-      series: [...data.series, { id: newSeriesId, name: newSeriesName }],
-      rows: data.rows.map((row, idx) => ({
+      series: [...data.series, { id: newSeriesId, name: '' }],
+      rows: data.rows.map((row) => ({
         ...row,
         values: {
           ...row.values,
-          [newSeriesId]: Math.round(50 + (idx + 1) * 20),
+          [newSeriesId]: 0,
         },
       })),
     })
@@ -113,7 +113,7 @@ export function TabularSeriesInput({
     const nextIndex = data.rows.length + 1
     const defaultValues: Record<string, number> = {}
     for (const s of data.series) {
-      defaultValues[s.id] = 100
+      defaultValues[s.id] = 0
     }
     onChange({
       ...data,
@@ -121,7 +121,7 @@ export function TabularSeriesInput({
         ...data.rows,
         {
           id: `row-${Date.now()}-${nextIndex}`,
-          category: `Item ${nextIndex}`,
+          category: '',
           values: defaultValues,
         },
       ],
@@ -221,12 +221,13 @@ export function TabularSeriesInput({
       header: () => {
         const cur = latestRef.current
         return (
-          <div className="min-w-[120px]">
+          <div className="w-24">
             <Input
               value={cur.data.categoryLabel}
               onChange={(e) => cur.handleCategoryLabelChange(e.target.value)}
+              placeholder="Category"
               aria-label="Category dimension label"
-              className="border-transparent bg-transparent px-2 font-semibold text-muted-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+              className="h-8 border-transparent bg-transparent px-2 font-semibold text-muted-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
             />
           </div>
         )
@@ -237,12 +238,15 @@ export function TabularSeriesInput({
         const row =
           cur.data.rows.find((r) => r.id === rowId) ?? info.row.original
         return (
-          <Input
-            value={row.category}
-            onChange={(e) => cur.handleRowCategoryChange(row.id, e.target.value)}
-            aria-label={`Category name for row ${info.row.index + 1}`}
-            className="min-w-[110px] border-transparent bg-transparent px-2.5 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
-          />
+          <div className="w-24">
+            <Input
+              value={row.category}
+              onChange={(e) => cur.handleRowCategoryChange(row.id, e.target.value)}
+              placeholder={`Row ${info.row.index + 1}`}
+              aria-label={`Category name for row ${info.row.index + 1}`}
+              className="h-8 border-transparent bg-transparent px-2 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+            />
+          </div>
         )
       },
     })
@@ -260,27 +264,30 @@ export function TabularSeriesInput({
             cur.paletteColors[idx % cur.paletteColors.length] ||
             '#0ea5e9'
           return (
-            <div className="group/col flex min-w-[155px] items-center gap-1.5">
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0 ml-1.5"
-                style={{ backgroundColor: seriesColor }}
-              />
-              <Input
-                value={s.name}
-                onChange={(e) =>
-                  cur.handleSeriesNameChange(s.id, e.target.value)
-                }
-                aria-label={`Series ${idx + 1} name`}
-                className="border-transparent bg-transparent px-2 font-semibold text-foreground hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
-              />
+            <div className="group/col flex w-28 items-center gap-1">
+              <div className="relative flex flex-1 items-center">
+                <span
+                  className="pointer-events-none absolute left-2 h-2 w-2 rounded-full ring-1 ring-background shadow-xs shrink-0"
+                  style={{ backgroundColor: seriesColor }}
+                />
+                <Input
+                  value={s.name}
+                  onChange={(e) =>
+                    cur.handleSeriesNameChange(s.id, e.target.value)
+                  }
+                  placeholder={`Series ${idx + 1}`}
+                  aria-label={`Series ${idx + 1} name`}
+                  className="h-8 pl-5 pr-1.5 text-xs font-semibold text-foreground border-transparent bg-transparent hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none transition-colors"
+                />
+              </div>
               {cur.data.series.length > 1 && (
                 <button
                   type="button"
                   onClick={() => cur.handleRemoveSeries(s.id)}
-                  title={`Remove ${s.name}`}
-                  className="opacity-0 group-hover/col:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity p-1 rounded shrink-0"
+                  title={`Remove ${s.name || `Series ${idx + 1}`}`}
+                  className="opacity-0 group-hover/col:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity p-0.5 rounded shrink-0"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
@@ -294,16 +301,19 @@ export function TabularSeriesInput({
           const s = cur.data.series.find((item) => item.id === seriesId)
           const currentVal = row.values[seriesId] ?? 0
           return (
-            <Input
-              type="number"
-              step="any"
-              value={currentVal}
-              onChange={(e) =>
-                cur.handleCellValueChange(row.id, seriesId, e.target.value)
-              }
-              aria-label={`${s?.name ?? seriesId} value for ${row.category}`}
-              className="min-w-[100px] border-transparent bg-transparent px-2.5 font-mono tabular-nums hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
-            />
+            <div className="w-28">
+              <Input
+                type="number"
+                step="any"
+                placeholder="0"
+                value={currentVal === 0 ? '' : currentVal}
+                onChange={(e) =>
+                  cur.handleCellValueChange(row.id, seriesId, e.target.value)
+                }
+                aria-label={`${s?.name || `Series ${idx + 1}`} value for ${row.category || `Row ${info.row.index + 1}`}`}
+                className="h-8 border-transparent bg-transparent px-2 font-mono tabular-nums text-xs hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+              />
+            </div>
           )
         },
       })
@@ -342,7 +352,7 @@ export function TabularSeriesInput({
   return (
     <div className="space-y-4" data-testid="tabular-series-input">
       {/* Primary Data Table */}
-      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
+      <ScrollArea className="w-full rounded-xl border border-border/70 bg-card">
         <table className="w-full border-collapse text-left">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -378,7 +388,8 @@ export function TabularSeriesInput({
             ))}
           </tbody>
         </table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       {/* Quiet Compact Table Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
@@ -418,7 +429,7 @@ export function TabularSeriesInput({
       </div>
 
       {showCsvImport && (
-        <div className="surface-enter rounded-xl border border-border/70 bg-muted/25 p-4 space-y-3">
+        <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/25 p-4 space-y-3">
           <Label className="text-muted-foreground">
             Paste comma or tab-separated values (first row as headers)
           </Label>

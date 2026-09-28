@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { CheckCircle2, Lock, Save, UserPlus, X } from 'lucide-react'
+import { CheckCircle2, Save, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
@@ -109,73 +109,72 @@ export function SaveProjectModal({
 
   return (
     <div
-      className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs"
+      className="animate-in fade-in duration-200 fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       data-testid="save-project-modal"
     >
-      <div className="modal-surface relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+      <div className="animate-in fade-in zoom-in-95 duration-200 origin-center relative w-full max-w-sm rounded-xl border border-border/70 bg-card p-6 shadow-xl">
         <button
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="absolute right-3.5 top-3.5 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
         {isPending ? (
-          <div className="py-12 text-center text-muted-foreground">
+          <div className="py-10 text-center text-xs text-muted-foreground">
             Checking authentication status...
           </div>
         ) : !isAuthenticated ? (
-          <div className="space-y-4" data-testid="auth-prompt-step">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Lock className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">
-                  {isSignUp
-                    ? 'Create an Account to Save'
-                    : 'Sign In to Save Your Chart'}
-                </h2>
-                <p className="text-muted-foreground">
-                  Your current chart data and configuration will be preserved.
-                </p>
-              </div>
+          <div className="space-y-5" data-testid="auth-prompt-step">
+            <div className="space-y-1 text-center">
+              <h2 className="text-lg font-semibold tracking-tight">
+                {isSignUp ? 'Create an account' : 'Sign in'}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Sign in to save your chart project
+              </p>
             </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4 pt-1">
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5">
               {isSignUp && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="modal-auth-name">Your Name</Label>
+                  <Label htmlFor="modal-auth-name" className="text-xs">
+                    Name
+                  </Label>
                   <Input
                     id="modal-auth-name"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ada Lovelace"
+                    placeholder="Your name"
+                    className="h-9"
                   />
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="modal-auth-email">Email Address</Label>
+                <Label htmlFor="modal-auth-email" className="text-xs">
+                  Email
+                </Label>
                 <Input
                   id="modal-auth-email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ada@example.com"
+                  placeholder="name@example.com"
+                  className="h-9"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="modal-auth-password">
-                  Password (min. 6 characters)
+                <Label htmlFor="modal-auth-password" className="text-xs">
+                  Password
                 </Label>
                 <Input
                   id="modal-auth-password"
@@ -185,11 +184,12 @@ export function SaveProjectModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="h-9"
                 />
               </div>
 
               {authError && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
+                <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   {authError}
                 </div>
               )}
@@ -197,33 +197,31 @@ export function SaveProjectModal({
               <Button
                 type="submit"
                 disabled={authLoading}
-                className="w-full gap-1.5"
+                className="w-full h-9"
                 data-testid="modal-auth-submit"
               >
-                <UserPlus className="h-4 w-4" />
                 {authLoading
-                  ? 'Authenticating...'
+                  ? 'Please wait...'
                   : isSignUp
-                    ? 'Sign Up & Continue to Save'
-                    : 'Sign In & Continue to Save'}
+                    ? 'Sign up & continue'
+                    : 'Sign in & continue'}
               </Button>
             </form>
 
-            <div className="border-t border-border pt-3 text-center">
+            <p className="text-center text-xs text-muted-foreground">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"
                 onClick={() => {
                   setIsSignUp((v) => !v)
                   setAuthError('')
                 }}
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
                 data-testid="modal-auth-toggle-mode"
               >
-                {isSignUp
-                  ? 'Already have an account? Sign in instead'
-                  : "Don't have an account? Create one now"}
+                {isSignUp ? 'Sign in' : 'Sign up'}
               </button>
-            </div>
+            </p>
           </div>
         ) : (
           <div className="space-y-4" data-testid="save-details-step">

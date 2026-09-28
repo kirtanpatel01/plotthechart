@@ -1,36 +1,210 @@
-import { createFileRoute } from '@tanstack/react-router'
+import React from 'react'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  ArrowRight,
+  BarChart3,
+  Download,
+  FolderKanban,
+  GitBranch,
+  Layers,
+  LineChart,
+  Palette,
+  PieChart,
+  Radar,
+  ScatterChart,
+  Table2,
+} from 'lucide-react'
 import { z } from 'zod'
-import { ChartStudio } from '#/components/charts/ChartStudio'
-import { getChartProjectByIdFn } from '#/lib/charts/projects.functions'
+import ThemeToggle from '#/components/ThemeToggle'
+import { Button } from '#/components/ui/button'
+import { CHART_TYPES_LIST } from '#/lib/charts/registry'
+import { PALETTES } from '#/lib/charts/types'
+import type { ChartTypeId } from '#/lib/charts/types'
 
-const studioSearchSchema = z.object({
+const landingSearchSchema = z.object({
   projectId: z.string().optional(),
 })
 
 export const Route = createFileRoute('/')({
-  validateSearch: studioSearchSchema,
-  loaderDeps: ({ search }) => ({ projectId: search.projectId }),
-  loader: async ({ deps }) => {
-    if (!deps.projectId) {
-      return { initialProject: null }
+  validateSearch: landingSearchSchema,
+  beforeLoad: ({ search }) => {
+    if (search.projectId) {
+      throw redirect({
+        to: '/studio',
+        search: { projectId: search.projectId },
+      })
     }
-    const project = await getChartProjectByIdFn({
-      data: { id: deps.projectId },
-    })
-    return { initialProject: project }
   },
-  component: StudioHomePage,
+  component: LandingPage,
 })
 
-function StudioHomePage() {
-  const { initialProject } = Route.useLoaderData()
+const CHART_ICONS: Record<
+  ChartTypeId,
+  React.ComponentType<{ className?: string }>
+> = {
+  bar: BarChart3,
+  line: LineChart,
+  area: Layers,
+  pie: PieChart,
+  scatter: ScatterChart,
+  radar: Radar,
+  treemap: GitBranch,
+}
 
+const EXISTING_FEATURES = [
+  {
+    icon: Table2,
+    title: '4 Adaptive Data Editors',
+    description:
+      'Tabular series grid (with CSV/TSV paste import), proportional slice table (with sort & normalize to 100%), XY/size coordinate table (with cluster cohorts), and nested tree editor, plus a copyable JSON inspector.',
+  },
+  {
+    icon: Palette,
+    title: `${Object.keys(PALETTES).length} Color Palettes & Options`,
+    description:
+      'Switch between 8 color palettes, set custom slice colors, and configure titles, subtitles, X/Y axis labels, legend position, gridlines, value labels, and chart-specific geometry.',
+  },
+  {
+    icon: Download,
+    title: 'Live SVG Preview & Export',
+    description:
+      'Charts render live as responsive vector graphics with hover value tooltips and one-click SVG file download.',
+  },
+  {
+    icon: FolderKanban,
+    title: 'Saved Projects Dashboard',
+    description:
+      'Create, configure, and export charts without an account. Sign in with email and password to save, search, filter by chart type, duplicate, and reopen projects.',
+  },
+]
+
+function LandingPage() {
   return (
-    <main className="w-full min-h-[calc(100vh-8rem)]">
-      <ChartStudio
-        key={initialProject?.id ?? 'new-studio'}
-        initialProject={initialProject}
-      />
-    </main>
+    <div className="flex flex-1 flex-col w-full">
+      {/* Standalone Top Bar */}
+      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
+          <Link
+            to="/"
+            search={{}}
+            className="flex items-center gap-2 font-semibold tracking-tight text-foreground no-underline"
+          >
+            <img
+              src="/logo.png"
+              alt="PlotTheChart"
+              className="size-7 shrink-0 rounded-lg object-contain"
+            />
+            <span>PlotTheChart</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild size="sm">
+              <Link to="/studio" search={{}} className="no-underline">
+                Open Studio
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto flex flex-1 w-full max-w-5xl flex-col justify-center px-4 py-12 space-y-14">
+        {/* Minimal Hero */}
+        <section className="max-w-2xl space-y-4">
+          <span className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            Data Visualization Studio
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+            Enter data, configure styling, and export SVG charts.
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            PlotTheChart is a workspace for building Bar, Line, Area, Pie/Donut,
+            Scatter/Bubble, Radar, and Treemap visualizations with schema-specific
+            data tables, live SVG rendering, and project persistence.
+          </p>
+          <div className="pt-2">
+            <Button asChild>
+              <Link to="/studio" search={{}} className="no-underline">
+                Open Studio
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+
+      {/* 7 Supported Chart Types */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            7 Chart Types
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Click any chart to open in Studio
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {CHART_TYPES_LIST.map((chart) => {
+            const Icon = CHART_ICONS[chart.type] || BarChart3
+            return (
+              <Link
+                key={chart.type}
+                to="/studio"
+                search={{ type: chart.type }}
+                className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 no-underline transition-colors hover:border-foreground/30 hover:bg-muted/20"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm font-semibold text-foreground">
+                        {chart.label}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {chart.shortDescription}
+                  </p>
+                </div>
+                <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between">
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    {chart.schemaKind}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* What Exists in the Workspace */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          What&apos;s Included
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {EXISTING_FEATURES.map((item) => {
+            const Icon = item.icon
+            return (
+              <div
+                key={item.title}
+                className="rounded-xl border border-border/70 bg-card p-4 space-y-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-primary shrink-0" />
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+      </main>
+    </div>
   )
 }

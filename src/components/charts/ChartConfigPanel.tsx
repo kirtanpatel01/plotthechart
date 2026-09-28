@@ -2,6 +2,13 @@ import { useForm } from '@tanstack/react-form'
 import { Palette } from 'lucide-react'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { Switch } from '#/components/ui/switch'
 import { getChartDefinition } from '#/lib/charts/registry'
 import { PALETTES } from '#/lib/charts/types'
@@ -59,7 +66,7 @@ export function ChartConfigPanel({
 
   return (
     <div
-      className="surface-enter rounded-2xl border border-border/60 bg-card p-6 space-y-6"
+      className="animate-in fade-in zoom-in-95 duration-200 rounded-2xl border border-border/60 bg-card p-6 space-y-6"
       data-testid="chart-config-panel"
     >
       {/* General Labels: Title, Subtitle, Axes */}
@@ -176,22 +183,25 @@ export function ChartConfigPanel({
 
         <div className="flex items-center justify-between gap-2">
           <Label htmlFor="legend-pos-select">Placement</Label>
-          <select
-            id="legend-pos-select"
+          <Select
             disabled={!config.showLegend}
             value={config.legendPosition}
-            onChange={(e) =>
+            onValueChange={(val) =>
               updateField(
                 'legendPosition',
-                e.target.value as ChartConfig['legendPosition'],
+                val as ChartConfig['legendPosition'],
               )
             }
-            className="h-9 rounded-md border border-input bg-background px-2.5 disabled:opacity-50"
           >
-            <option value="top">Top</option>
-            <option value="bottom">Bottom</option>
-            <option value="right">Right</option>
-          </select>
+            <SelectTrigger id="legend-pos-select" className="w-[110px]">
+              <SelectValue placeholder="Placement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="top">Top</SelectItem>
+              <SelectItem value="bottom">Bottom</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center justify-between gap-2">
@@ -225,19 +235,23 @@ export function ChartConfigPanel({
               return (
                 <div key={field.key} className="space-y-2">
                   <Label className="text-muted-foreground">{field.label}</Label>
-                  <select
+                  <Select
                     value={String(currentValue)}
-                    onChange={(e) =>
-                      updateSpecificOption(field.key, e.target.value as any)
+                    onValueChange={(val) =>
+                      updateSpecificOption(field.key, val as any)
                     }
-                    className="h-9 w-full rounded-md border border-input bg-background px-3"
                   >
-                    {field.choices.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={field.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.choices.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )
             }

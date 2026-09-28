@@ -1,232 +1,178 @@
-# plotthechart
+<div align="center">
+  <img src="./public/logo.png" alt="PlotTheChart Logo" width="72" height="72" />
+  <h1>PlotTheChart</h1>
+  <p><strong>Open-Source Data Visualization Studio built with TanStack Start</strong></p>
+</div>
 
-Welcome to your new TanStack Start app!
+---
 
-# Getting Started
+**PlotTheChart** is an open-source web workspace for creating, configuring, saving, and exporting SVG charts. Visitors can enter or paste data, switch between chart types, customize palettes and geometry, and download `.svg` files without an account—or sign in to save and manage projects in a personal dashboard.
 
-To run this application:
+## Features
+
+- **7 Chart Types**:
+  - **Bar Chart** (`tabular-series`): Grouped, stacked, or 100% normalized vertical/horizontal bars.
+  - **Line Chart** (`tabular-series`): Multi-series trend lines with smooth/linear interpolation and optional area fill.
+  - **Area Chart** (`tabular-series`): Overlapping or stacked cumulative area charts.
+  - **Pie / Donut Chart** (`proportional-slices`): Part-to-whole slices with adjustable donut inner radius, slice padding, and percentage/value labels.
+  - **Scatter / Bubble Plot** (`coordinate-points`): Continuous `(x, y, size)` coordinates grouped by named clusters with optional linear trendline.
+  - **Radar / Spider Chart** (`tabular-series`): Multi-axis polygon comparison across categorical dimensions.
+  - **Hierarchical Treemap** (`hierarchical-tree`): Nested parent/child proportional blocks.
+- **4 Schema-Specific Data Editors**:
+  - **Tabular Series Grid** (powered by TanStack Table v9) with multi-series columns and **CSV / TSV paste import**.
+  - **Proportional Slices Editor** with custom per-slice color pickers, notes, sorting, and 100% normalization.
+  - **Coordinate Points Editor** with cluster cohorts and `(x, y, size)` tuples.
+  - **Hierarchical Tree Editor** with expandable parent branches and child leaf nodes.
+  - **JSON Schema Inspector** with one-click copy.
+- **8 Built-in Color Palettes & Styling Controls**:
+  - `Ocean Teal`, `Emerald Forest`, `Amber Sunset`, `Royal Indigo`, `Rose Coral`, `Slate Mono`, `Cyber Mint`, and `Berry Plum`.
+  - Configure chart titles, subtitles, X/Y axis labels, legend position (`top`, `bottom`, `none`), gridlines, value labels, and chart-specific geometry options.
+- **Interactive SVG Renderer & Export**:
+  - Responsive vector canvas with hover value tooltips and one-click `.svg` file download.
+- **Saved Projects Dashboard**:
+  - Email/password authentication via Better Auth.
+  - Save, search, filter by chart type, duplicate, reopen, and delete chart projects stored in PostgreSQL.
+
+---
+
+## Tech Stack
+
+- **Framework**: [TanStack Start](https://tanstack.com/start) + [TanStack Router](https://tanstack.com/router) (React 19)
+- **Data Fetching**: [TanStack Query v5](https://tanstack.com/query) with SSR router integration
+- **Data Grid**: [TanStack Table v9](https://tanstack.com/table)
+- **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) + [Lucide Icons](https://lucide.dev/)
+- **Authentication**: [Better Auth](https://www.better-auth.com/) (`better-auth` with Prisma adapter)
+- **Database & ORM**: [Prisma ORM v7](https://www.prisma.io/) (`@prisma/client` + `@prisma/adapter-pg`) with PostgreSQL
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** 20+
+- **pnpm** 9+
+- **PostgreSQL** database (or use the built-in local Prisma Postgres server via `pnpm exec prisma dev`)
+
+### 1. Clone & Install Dependencies
 
 ```bash
+git clone https://github.com/kirtanpatel01/plotthechart.git
+cd plotthechart
 pnpm install
+```
+
+### 2. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/plotthechart?sslmode=disable"
+BETTER_AUTH_URL="http://localhost:3000"
+BETTER_AUTH_SECRET="your-secret-key"
+```
+
+You can generate a secure `BETTER_AUTH_SECRET` with:
+
+```bash
+pnpm dlx @better-auth/cli secret
+```
+
+### 3. Initialize the Database
+
+If you don't have a local PostgreSQL instance running, you can start a local Prisma Postgres development server:
+
+```bash
+pnpm exec prisma dev --name plotthechart --db-port 5432
+```
+
+Then generate the Prisma client and push the schema:
+
+```bash
+pnpm db:generate
+pnpm db:push
+```
+
+### 4. Start the Development Server
+
+```bash
 pnpm dev
 ```
 
-# Building For Production
+Open [http://localhost:3000](http://localhost:3000) in your browser:
+- `/` — Standalone landing page
+- `/studio` — Interactive Chart Studio
+- `/dashboard` — Saved Projects dashboard
+- `/about` — Architecture & schema overview
+- `/signin` — Sign in / Sign up
 
-To build this application for production:
+---
 
-```bash
-pnpm build
+## Project Structure
+
+```text
+├── prisma/
+│   └── schema.prisma                  # User, Session, Account, Verification, ChartProject models
+├── public/
+│   ├── logo.png                       # App logo
+│   ├── favicon.png                    # PNG favicon
+│   └── favicon.ico                    # ICO favicon
+└── src/
+    ├── components/
+    │   ├── app-sidebar.tsx            # Collapsible workspace sidebar
+    │   ├── charts/
+    │   │   ├── ChartStudio.tsx        # Main studio workspace (data input + live preview)
+    │   │   ├── ChartCanvas.tsx        # Interactive SVG renderer for all 7 chart types
+    │   │   ├── ChartConfigPanel.tsx   # Palette, axes, legend, and chart-specific settings
+    │   │   ├── SaveProjectModal.tsx   # Project save & inline auth modal
+    │   │   └── inputs/                # Schema-specific data editors
+    │   └── ui/                        # shadcn/ui primitives
+    ├── lib/
+    │   ├── auth.ts                    # Better Auth server configuration
+    │   ├── auth-client.ts             # Better Auth client hooks
+    │   └── charts/
+    │       ├── types.ts               # Polymorphic Zod schemas & color palettes
+    │       ├── registry.ts            # Declarative chart registry & default configs
+    │       └── projects.functions.ts  # Authenticated server functions for CRUD
+    └── routes/
+        ├── __root.tsx                 # Root document & layout switcher
+        ├── index.tsx                  # Standalone landing page
+        ├── studio.tsx                 # Chart Studio route (/studio)
+        ├── dashboard.tsx              # Saved Projects dashboard (/dashboard)
+        ├── about.tsx                  # Architecture overview (/about)
+        └── signin.tsx                 # Authentication page (/signin)
 ```
 
-## Styling
+---
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## Extending With a New Chart Type
 
-### Removing Tailwind CSS
+PlotTheChart uses a polymorphic `schemaKind` union and a declarative chart registry so new chart types can be added without database migrations:
 
-If you prefer not to use Tailwind CSS:
+1. **Schema (`src/lib/charts/types.ts`)**: Reuse an existing `schemaKind` (`tabular-series`, `proportional-slices`, `coordinate-points`, `hierarchical-tree`) or add a new Zod schema to `AnyChartDataSchema`.
+2. **Registry (`src/lib/charts/registry.ts`)**: Register the chart type metadata, blank `defaultData()`, `defaultConfig()`, and `specificOptionFields` in `CHART_REGISTRY`.
+3. **Renderer (`src/components/charts/ChartCanvas.tsx`)**: Add the SVG rendering branch for the new chart type.
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+---
 
+## Available Scripts
 
-## Shadcn
+| Command | Description |
+| :--- | :--- |
+| `pnpm dev` | Start the Vite development server on port `3000` |
+| `pnpm build` | Build the application for production |
+| `pnpm preview` | Preview the production build locally |
+| `pnpm generate-routes` | Regenerate TanStack Router route tree (`src/routeTree.gen.ts`) |
+| `pnpm db:generate` | Generate the typed Prisma client into `src/generated/prisma` |
+| `pnpm db:push` | Push the Prisma schema to PostgreSQL |
+| `pnpm db:studio` | Open Prisma Studio to inspect database records |
 
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+---
 
-```bash
-pnpm dlx shadcn@latest add button
-```
+## Contributing
 
+Contributions, issues, and feature requests are welcome! Feel free to fork the repository, create a feature branch, and open a pull request.
 
-## Setting up Better Auth
+## License
 
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
-
-   ```bash
-   pnpm dlx @better-auth/cli secret
-   ```
-
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
-
-```bash
-pnpm dlx @better-auth/cli migrate
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+This project is open-source and available under the [MIT License](https://opensource.org/licenses/MIT).

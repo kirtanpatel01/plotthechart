@@ -1,6 +1,7 @@
 import { ArrowDownWideNarrow, Percent, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { ScrollArea, ScrollBar } from '#/components/ui/scroll-area'
 import { PALETTES } from '#/lib/charts/types'
 import type { PaletteId, ProportionalSlicesData } from '#/lib/charts/types'
 
@@ -45,8 +46,8 @@ export function ProportionalSlicesInput({
         ...data.slices,
         {
           id: `slice-${Date.now()}-${idx}`,
-          label: `Segment ${idx}`,
-          value: 100,
+          label: '',
+          value: 0,
           note: '',
         },
       ],
@@ -93,7 +94,7 @@ export function ProportionalSlicesInput({
             <div
               key={s.id}
               style={{ width: `${pct}%`, backgroundColor: color }}
-              title={`${s.label}: ${pct.toFixed(1)}%`}
+              title={`${s.label || `Segment ${idx + 1}`}: ${pct.toFixed(1)}%`}
               className="transition-[background-color,opacity] duration-[180ms] ease-[var(--ease-out)]"
             />
           )
@@ -101,7 +102,7 @@ export function ProportionalSlicesInput({
       </div>
 
       {/* Clean Unified Table of Slices */}
-      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
+      <ScrollArea className="w-full rounded-xl border border-border/70 bg-card">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-border/70 bg-muted/30 font-semibold text-muted-foreground">
@@ -155,7 +156,7 @@ export function ProportionalSlicesInput({
                         onChange={(e) =>
                           handleSliceChange(slice.id, { label: e.target.value })
                         }
-                        placeholder="Slice label"
+                        placeholder={`Segment ${idx + 1}`}
                         aria-label={`Slice ${idx + 1} label`}
                         className="border-transparent bg-transparent px-2 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                       />
@@ -167,13 +168,17 @@ export function ProportionalSlicesInput({
                       type="number"
                       min={0}
                       step="any"
-                      value={slice.value}
+                      placeholder="0"
+                      value={slice.value === 0 ? '' : slice.value}
                       onChange={(e) => {
                         const parsed = Number(e.target.value)
                         handleSliceChange(slice.id, {
-                          value: Number.isFinite(parsed)
-                            ? Math.max(0, parsed)
-                            : 0,
+                          value:
+                            e.target.value === ''
+                              ? 0
+                              : Number.isFinite(parsed)
+                                ? Math.max(0, parsed)
+                                : 0,
                         })
                       }}
                       aria-label={`Slice ${idx + 1} value`}
@@ -213,7 +218,8 @@ export function ProportionalSlicesInput({
             })}
           </tbody>
         </table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       {/* Quiet Compact Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">

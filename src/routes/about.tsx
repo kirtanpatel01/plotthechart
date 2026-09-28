@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { Button } from '#/components/ui/button'
 import { CHART_TYPES_LIST } from '#/lib/charts/registry'
 
 export const Route = createFileRoute('/about')({
@@ -7,9 +8,11 @@ export const Route = createFileRoute('/about')({
 
 function AboutPage() {
   return (
-    <main className="w-full px-6 py-8 sm:px-8 lg:px-10 space-y-8">
+    <main className="w-full p-4 space-y-8">
       <section className="rounded-2xl border border-border bg-card/85 p-8 space-y-4">
-        <p className="island-kicker">Architecture &amp; Extensibility</p>
+        <p className="text-[0.69rem] font-bold uppercase tracking-[0.14em] text-primary">
+          Architecture &amp; Extensibility
+        </p>
         <h1 className="text-3xl font-bold tracking-tight">
           Polymorphic Schema &amp; Chart Registry Design
         </h1>
@@ -21,13 +24,11 @@ function AboutPage() {
           chart-specific configuration fields.
         </p>
         <div className="pt-2">
-          <Link
-            to="/"
-            search={{}}
-            className="inline-flex h-10 items-center rounded-lg bg-primary px-5 font-semibold text-primary-foreground no-underline"
-          >
-            Launch Chart Studio →
-          </Link>
+          <Button asChild size="lg">
+            <Link to="/studio" search={{}} className="no-underline">
+              Launch Chart Studio →
+            </Link>
+          </Button>
         </div>
       </section>
 
@@ -35,7 +36,7 @@ function AboutPage() {
         {CHART_TYPES_LIST.map((def) => (
           <article
             key={def.type}
-            className="stagger-item rounded-xl border border-border bg-card/75 p-5 space-y-2"
+            className="animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-xl border border-border bg-card/75 p-5 space-y-2"
           >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-bold">{def.label}</h2>

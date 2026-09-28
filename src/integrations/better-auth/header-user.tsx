@@ -40,7 +40,7 @@ export default function BetterAuthHeader() {
 
   return (
     <Link
-      to="/demo/better-auth"
+      to="/signin"
       className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground no-underline hover:bg-muted transition-colors"
       data-testid="header-signin-link"
     >

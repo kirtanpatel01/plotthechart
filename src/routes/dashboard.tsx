@@ -7,7 +7,6 @@ import {
   Edit3,
   FilePlus2,
   FolderKanban,
-  Lock,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -125,55 +124,58 @@ function DashboardPage() {
 
   if (!activeUser) {
     return (
-      <main className="mx-auto max-w-md px-4 py-16">
+      <main className="flex flex-1 w-full items-center justify-center p-4">
         <section
-          className="rounded-2xl border border-border bg-card p-6 shadow-lg space-y-5"
+          className="w-full max-w-sm rounded-xl border border-border/70 bg-card p-6 shadow-xs space-y-5"
           data-testid="dashboard-auth-gate"
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Lock className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">
-                {isSignUp
-                  ? 'Create an Account'
-                  : 'Sign In to Your Projects Dashboard'}
-              </h1>
-              <p className="text-muted-foreground">
-                View, reopen, edit, and manage all your saved charts.
-              </p>
-            </div>
+          <div className="space-y-1 text-center">
+            <h1 className="text-lg font-semibold tracking-tight">
+              {isSignUp ? 'Create an account' : 'Sign in'}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {isSignUp
+                ? 'Enter your details below to get started'
+                : 'Enter your email and password to continue'}
+            </p>
           </div>
 
-          <form onSubmit={handleInlineAuth} className="space-y-4">
+          <form onSubmit={handleInlineAuth} className="space-y-3.5">
             {isSignUp && (
               <div className="space-y-1.5">
-                <Label htmlFor="dash-auth-name">Name</Label>
+                <Label htmlFor="dash-auth-name" className="text-xs">
+                  Name
+                </Label>
                 <Input
                   id="dash-auth-name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ada Lovelace"
+                  placeholder="Your name"
+                  className="h-9"
                 />
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="dash-auth-email">Email</Label>
+              <Label htmlFor="dash-auth-email" className="text-xs">
+                Email
+              </Label>
               <Input
                 id="dash-auth-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ada@example.com"
+                placeholder="name@example.com"
+                className="h-9"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="dash-auth-password">Password</Label>
+              <Label htmlFor="dash-auth-password" className="text-xs">
+                Password
+              </Label>
               <Input
                 id="dash-auth-password"
                 type="password"
@@ -182,11 +184,12 @@ function DashboardPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                className="h-9"
               />
             </div>
 
             {authError && (
-              <p className="rounded-lg bg-destructive/10 p-2.5 text-destructive">
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
                 {authError}
               </p>
             )}
@@ -194,34 +197,30 @@ function DashboardPage() {
             <Button
               type="submit"
               disabled={authSubmitting}
-              className="w-full"
+              className="w-full h-9"
               data-testid="dashboard-auth-submit"
             >
               {authSubmitting
                 ? 'Please wait...'
                 : isSignUp
-                  ? 'Create Account'
-                  : 'Sign In'}
+                  ? 'Sign up'
+                  : 'Sign in'}
             </Button>
           </form>
 
-          <div className="flex items-center justify-between border-t border-border pt-3">
+          <p className="text-center text-xs text-muted-foreground">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               type="button"
               onClick={() => {
                 setIsSignUp((v) => !v)
                 setAuthError('')
               }}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
             >
-              {isSignUp
-                ? 'Already have an account? Sign in'
-                : 'Need an account? Sign up'}
+              {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
-            <Link to="/" className="text-muted-foreground hover:underline">
-              ← Back to Studio
-            </Link>
-          </div>
+          </p>
         </section>
       </main>
     )
@@ -241,7 +240,7 @@ function DashboardPage() {
 
   return (
     <main
-      className="w-full px-5 py-6 sm:px-8 lg:px-10 space-y-8"
+      className="w-full p-4 space-y-8"
       data-testid="projects-dashboard"
     >
       {/* Dashboard Header */}
@@ -265,15 +264,17 @@ function DashboardPage() {
           </div>
         </div>
 
-        <Link
-          to="/"
-          search={{}}
-          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline shadow-xs hover:opacity-90 transition-opacity"
-          data-testid="create-new-project-link"
-        >
-          <FilePlus2 className="h-4 w-4" />
-          Create New Chart Project
-        </Link>
+        <Button asChild>
+          <Link
+            to="/studio"
+            search={{}}
+            className="no-underline"
+            data-testid="create-new-project-link"
+          >
+            <FilePlus2 className="h-4 w-4" />
+            Create New Chart Project
+          </Link>
+        </Button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -337,14 +338,12 @@ function DashboardPage() {
               : 'Try clearing your search query or selecting All Types.'}
           </p>
           <div className="pt-2">
-            <Link
-              to="/"
-              search={{}}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline"
-            >
-              <FilePlus2 className="h-4 w-4" />
-              Open Chart Studio
-            </Link>
+            <Button asChild>
+              <Link to="/studio" search={{}} className="no-underline">
+                <FilePlus2 className="h-4 w-4" />
+                Open Chart Studio
+              </Link>
+            </Button>
           </div>
         </div>
       ) : (
@@ -357,7 +356,7 @@ function DashboardPage() {
             return (
               <article
                 key={project.id}
-                className="stagger-item flex flex-col justify-between rounded-2xl border border-border bg-card/90 p-5 shadow-xs transition-[transform,border-color,box-shadow,opacity] duration-[200ms] ease-[var(--ease-out)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-primary/40 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
+                className="animate-in fade-in slide-in-from-bottom-2 duration-200 flex flex-col justify-between rounded-2xl border border-border bg-card/90 p-5 shadow-xs transition-[transform,border-color,box-shadow,opacity] duration-[200ms] ease-[var(--ease-out)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-primary/40 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-md"
                 data-testid={`project-card-${project.id}`}
               >
                 <div className="space-y-3">
@@ -405,15 +404,17 @@ function DashboardPage() {
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    <Link
-                      to="/"
-                      search={{ projectId: project.id }}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 font-medium text-primary-foreground no-underline hover:opacity-90 transition-opacity"
-                      data-testid={`open-project-btn-${project.id}`}
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Reopen &amp; Edit
-                    </Link>
+                    <Button asChild size="sm">
+                      <Link
+                        to="/studio"
+                        search={{ projectId: project.id }}
+                        className="no-underline"
+                        data-testid={`open-project-btn-${project.id}`}
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Reopen &amp; Edit
+                      </Link>
+                    </Button>
 
                     <Button
                       type="button"
