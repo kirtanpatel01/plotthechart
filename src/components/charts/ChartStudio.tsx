@@ -54,7 +54,6 @@ import type {
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { ChartCanvas } from './ChartCanvas'
 import { ChartConfigPanel } from './ChartConfigPanel'
-import { SaveProjectModal } from './SaveProjectModal'
 import { CoordinatePointsInput } from './inputs/CoordinatePointsInput'
 import { HierarchicalTreeInput } from './inputs/HierarchicalTreeInput'
 import { ProportionalSlicesInput } from './inputs/ProportionalSlicesInput'
@@ -156,7 +155,6 @@ export function ChartStudio({
 
   const { data: session } = authClient.useSession()
   const [isSaving, setIsSaving] = useState(false)
-  const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [saveSuccessBanner, setSaveSuccessBanner] = useState<{
     projectId: string
     name: string
@@ -379,8 +377,8 @@ export function ChartStudio({
   }
 
   const handleSaveAction = async () => {
-    if (!session?.user && !activeProjectId) {
-      setSaveModalOpen(true)
+    if (!session?.user) {
+      void navigate({ to: '/signin' })
       return
     }
     setIsSaving(true)
@@ -389,8 +387,6 @@ export function ChartStudio({
         name: config.title.trim() || projectName.trim() || defaultUntitledTitle,
         description: config.subtitle.trim() || projectDescription.trim(),
       })
-    } catch {
-      setSaveModalOpen(true)
     } finally {
       setIsSaving(false)
     }
@@ -885,18 +881,6 @@ export function ChartStudio({
           })()}
         </section>
       </div>
-
-      {/* Save Project & Auth Modal */}
-      <SaveProjectModal
-        open={saveModalOpen}
-        onClose={() => setSaveModalOpen(false)}
-        initialName={
-          config.title.trim() || projectName.trim() || defaultUntitledTitle
-        }
-        initialDescription={config.subtitle.trim() || projectDescription.trim()}
-        isUpdatingExisting={Boolean(activeProjectId)}
-        onSaveConfirmed={handleSaveConfirmed}
-      />
     </div>
   )
 }

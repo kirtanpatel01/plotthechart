@@ -7,7 +7,6 @@ import {
   LogOut,
   Sparkles,
   User,
-  UserPlus,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -154,36 +153,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
             </>
           ) : (
-            <>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith('/signin')}
-                  tooltip="Sign in"
-                  className="text-muted-foreground hover:text-foreground"
-                  data-testid="header-signin-link"
-                >
-                  <Link to="/signin" className="no-underline">
-                    <LogIn />
-                    <span>Sign in</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith('/signup')}
-                  tooltip="Sign up"
-                  className="text-muted-foreground hover:text-foreground"
-                  data-testid="header-signup-link"
-                >
-                  <Link to="/signup" className="no-underline">
-                    <UserPlus />
-                    <span>Sign up</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith('/signin')}
+                tooltip="Sign in"
+                className="text-muted-foreground hover:text-foreground"
+                data-testid="header-signin-link"
+              >
+                <Link to="/signin" className="no-underline">
+                  <LogIn />
+                  <span>Sign in</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           )}
         </SidebarMenu>
       </SidebarFooter>
