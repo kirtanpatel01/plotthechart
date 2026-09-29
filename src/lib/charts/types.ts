@@ -54,6 +54,7 @@ export const TabularSeriesDataSchema = z.object({
       z.object({
         id: z.string(),
         category: z.string(),
+        date: z.string().optional(),
         values: z.record(z.string(), z.number()),
       }),
     )
@@ -70,6 +71,7 @@ export const ProportionalSlicesDataSchema = z.object({
       z.object({
         id: z.string(),
         label: z.string(),
+        date: z.string().optional(),
         value: z.number().min(0),
         color: z.string().optional(),
         note: z.string().optional(),
@@ -98,6 +100,7 @@ export const CoordinatePointsDataSchema = z.object({
       z.object({
         id: z.string(),
         label: z.string(),
+        date: z.string().optional(),
         groupId: z.string(),
         x: z.number(),
         y: z.number(),
@@ -123,6 +126,7 @@ export const HierarchicalTreeDataSchema = z.object({
             z.object({
               id: z.string(),
               name: z.string(),
+              date: z.string().optional(),
               value: z.number().min(0),
             }),
           )
@@ -257,3 +261,13 @@ export interface ChartTypeDefinition<
   presets: Array<ChartPreset<TData>>
   specificOptionFields: Array<ChartOptionFieldDescriptor>
 }
+
+export type TimeRangePreset =
+  | 'all'
+  | 'today'
+  | '7d'
+  | '1m'
+  | '6m'
+  | '1y'
+  | 'custom'
+

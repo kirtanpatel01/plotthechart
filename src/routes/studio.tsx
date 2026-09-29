@@ -30,7 +30,7 @@ function StudioPage() {
   const { type } = Route.useSearch()
 
   return (
-    <main className="w-full min-h-[calc(100vh-8rem)]">
+    <main className="w-full min-w-0 min-h-[calc(100dvh-8rem)]">
       <ChartStudio
         key={initialProject?.id ?? type ?? 'new-studio'}
         initialProject={initialProject}

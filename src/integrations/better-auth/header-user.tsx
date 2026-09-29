@@ -28,7 +28,7 @@ export default function BetterAuthHeader() {
           onClick={() => {
             void authClient.signOut()
           }}
-          className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="cursor-pointer inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           data-testid="header-signout-btn"
         >
           <LogOut className="h-3.5 w-3.5" />

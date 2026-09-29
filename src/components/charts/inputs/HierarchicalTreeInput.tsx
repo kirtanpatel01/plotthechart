@@ -1,6 +1,7 @@
 import { FolderTree, Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
+import { getTodayIsoDate } from '#/lib/charts/registry'
 import { PALETTES } from '#/lib/charts/types'
 import type { HierarchicalTreeData, PaletteId } from '#/lib/charts/types'
 
@@ -53,6 +54,7 @@ export function HierarchicalTreeInput({
             {
               id: `leaf-${Date.now()}-1`,
               name: '',
+              date: getTodayIsoDate(),
               value: 0,
             },
           ],
@@ -82,6 +84,7 @@ export function HierarchicalTreeInput({
             {
               id: `leaf-${Date.now()}-${nextIdx}`,
               name: '',
+              date: getTodayIsoDate(),
               value: 0,
             },
           ],
@@ -123,9 +126,9 @@ export function HierarchicalTreeInput({
   }
 
   return (
-    <div className="space-y-5" data-testid="hierarchical-tree-input">
+    <div className="space-y-4 sm:space-y-5 min-w-0" data-testid="hierarchical-tree-input">
       {/* Clean Tree Container */}
-      <div className="rounded-xl border border-border/70 bg-card divide-y divide-border/50">
+      <div className="max-h-[420px] overflow-y-auto rounded-xl border border-border/70 bg-card divide-y divide-border/50">
         {data.branches.map((branch, bIdx) => {
           const branchColor =
             branch.color ||
@@ -139,9 +142,9 @@ export function HierarchicalTreeInput({
             grandTotal > 0 ? ((branchSum / grandTotal) * 100).toFixed(1) : '0.0'
 
           return (
-            <div key={branch.id} className="p-4 space-y-3">
+            <div key={branch.id} className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 flex-1 min-w-[200px]">
+                <div className="flex items-center gap-2 flex-1 min-w-[160px]">
                   <span
                     className="h-3 w-3 rounded-sm shrink-0"
                     style={{ backgroundColor: branchColor }}
@@ -153,9 +156,9 @@ export function HierarchicalTreeInput({
                     }
                     placeholder={`Group ${bIdx + 1}`}
                     aria-label={`Branch ${bIdx + 1} name`}
-                    className="border-transparent bg-transparent px-2 font-semibold max-w-xs hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                    className="flex-1 min-w-0 border-transparent bg-transparent px-2 font-semibold max-w-xs hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                   />
-                  <span className="text-muted-foreground tabular-nums">
+                  <span className="text-xs sm:text-sm text-muted-foreground tabular-nums shrink-0">
                     {branchSum.toLocaleString()} ({branchShare}%)
                   </span>
                 </div>
@@ -176,7 +179,7 @@ export function HierarchicalTreeInput({
                       type="button"
                       onClick={() => handleRemoveBranch(branch.id)}
                       title="Remove branch"
-                      className="p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors rounded"
+                      className="cursor-pointer p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors rounded"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -184,7 +187,7 @@ export function HierarchicalTreeInput({
                 </div>
               </div>
 
-              <div className="space-y-1.5 pl-5 border-l border-border/60 ml-1.5">
+              <div className="space-y-1.5 pl-3 sm:pl-5 border-l border-border/60 ml-1 sm:ml-1.5">
                 {branch.children.map((leaf, lIdx) => {
                   const leafPct =
                     grandTotal > 0
@@ -193,7 +196,7 @@ export function HierarchicalTreeInput({
                   return (
                     <div
                       key={leaf.id}
-                      className="flex items-center gap-3 py-0.5"
+                      className="flex items-center gap-1.5 sm:gap-3 py-0.5"
                     >
                       <Input
                         value={leaf.name}
@@ -204,7 +207,7 @@ export function HierarchicalTreeInput({
                         }
                         placeholder={`Item ${bIdx + 1}.${lIdx + 1}`}
                         aria-label={`Branch ${bIdx + 1} Leaf ${lIdx + 1} name`}
-                        className="flex-1 border-transparent bg-transparent px-2.5 hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                        className="flex-1 min-w-0 border-transparent bg-transparent px-2 hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                       />
                       <Input
                         type="number"
@@ -224,9 +227,9 @@ export function HierarchicalTreeInput({
                           })
                         }}
                         aria-label={`Branch ${bIdx + 1} Leaf ${lIdx + 1} value`}
-                        className="w-28 border-transparent bg-transparent px-2.5 font-mono tabular-nums text-right hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+                        className="w-20 sm:w-28 border-transparent bg-transparent px-2 font-mono tabular-nums text-right hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
                       />
-                      <span className="w-14 text-right font-mono text-muted-foreground tabular-nums">
+                      <span className="w-11 sm:w-14 text-xs sm:text-sm text-right font-mono text-muted-foreground tabular-nums shrink-0">
                         {leafPct}%
                       </span>
                       <button
@@ -234,7 +237,7 @@ export function HierarchicalTreeInput({
                         disabled={branch.children.length <= 1}
                         onClick={() => handleRemoveLeaf(branch.id, leaf.id)}
                         title="Remove leaf node"
-                        className="p-1 text-muted-foreground/50 hover:text-destructive disabled:opacity-20 transition-colors rounded"
+                        className="cursor-pointer p-1 text-muted-foreground/50 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-20 transition-colors rounded shrink-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -260,16 +263,16 @@ export function HierarchicalTreeInput({
           Add Group
         </Button>
 
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <FolderTree className="h-4 w-4" />
+        <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground min-w-0">
+          <FolderTree className="h-4 w-4 shrink-0" />
           <Input
             value={data.rootLabel}
             onChange={(e) => handleRootLabelChange(e.target.value)}
             placeholder="Root hierarchy label"
             aria-label="Root hierarchy label"
-            className="w-48 border-transparent bg-transparent px-2 font-medium text-right hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
+            className="w-32 sm:w-48 border-transparent bg-transparent px-2 font-medium text-right hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
           />
-          <span className="tabular-nums font-mono">
+          <span className="tabular-nums font-mono text-xs sm:text-sm shrink-0">
             • {grandTotal.toLocaleString()}
           </span>
         </div>

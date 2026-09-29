@@ -198,6 +198,7 @@
 html {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 html,
@@ -206,13 +207,19 @@ body,
   min-height: 100dvh;
 }
 
-/* Mobile-native: prevent iOS Safari zoom on input focus while keeping desktop inputs crisp */
+/* Mobile-native: prevent iOS Safari auto-zoom on input focus (requires >=16px) while keeping desktop inputs compact */
 @media (pointer: coarse) {
-  input,
+  input:not([type='range']):not([type='color']):not([type='checkbox']):not([type='radio']),
   textarea,
   select {
-    font-size: 16px;
+    font-size: max(16px, 1em) !important;
   }
+}
+
+[data-slot='scroll-area-viewport'],
+.overflow-y-auto,
+.overflow-x-auto {
+  overscroll-behavior: contain;
 }
 
 button,
@@ -235,6 +242,12 @@ button,
     border-color 180ms ease,
     box-shadow 180ms ease,
     opacity 180ms ease;
+}
+
+button:not(:disabled),
+[role='button']:not(:disabled),
+[role='radio']:not(:disabled) {
+  cursor: pointer;
 }
 
 button:not(:disabled):active,

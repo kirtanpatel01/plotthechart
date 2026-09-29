@@ -16,6 +16,11 @@ interface ChartCanvasProps {
   config: ChartConfig
   svgRef?: React.RefObject<SVGSVGElement | null>
   compact?: boolean
+  supportsAxes?: boolean
+  onAxisLabelChange?: (
+    axis: 'xAxisLabel' | 'yAxisLabel',
+    value: string,
+  ) => void
 }
 
 interface TooltipState {
@@ -113,6 +118,8 @@ export function ChartCanvas({
   config,
   svgRef,
   compact = false,
+  supportsAxes = false,
+  onAxisLabelChange,
 }: ChartCanvasProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const paletteColors =
@@ -503,7 +510,7 @@ export function ChartCanvas({
               x={padLeft + plotW / 2}
               y={height - 10}
               textAnchor="middle"
-              className="fill-current text-[11px] font-semibold opacity-75"
+              className="fill-current text-[11px] font-semibold opacity-75 [.interactive-canvas_&]:hidden"
             >
               {config.xAxisLabel}
             </text>
@@ -514,7 +521,7 @@ export function ChartCanvas({
               y={padTop + plotH / 2}
               textAnchor="middle"
               transform={`rotate(-90, 16, ${padTop + plotH / 2})`}
-              className="fill-current text-[11px] font-semibold opacity-75"
+              className="fill-current text-[11px] font-semibold opacity-75 [.interactive-canvas_&]:hidden"
             >
               {config.yAxisLabel}
             </text>
@@ -522,120 +529,140 @@ export function ChartCanvas({
 
           {/* BAR RENDERER */}
           {chartType === 'bar' &&
-            rows.map((row, rIdx) => {
-              const bandW = plotW / Math.max(1, rows.length)
-              const groupLeft = padLeft + rIdx * bandW + bandW * 0.16
-              const groupW = bandW * 0.68
-              let stackBottom = padTop + plotH
+            (() => {
+              const tickStep = rows.length > 10 ? Math.ceil(rows.length / 10) : 1
+              return rows.map((row, rIdx) => {
+                const bandW = plotW / Math.max(1, rows.length)
+                const groupLeft = padLeft + rIdx * bandW + bandW * 0.16
+                const groupW = bandW * 0.68
+                let stackBottom = padTop + plotH
+                const showTickLabel =
+                  rows.length <= 10 ||
+                  rIdx % tickStep === 0 ||
+                  rIdx === rows.length - 1
 
-              return (
-                <g key={row.id}>
-                  <text
-                    x={padLeft + rIdx * bandW + bandW / 2}
-                    y={padTop + plotH + 20}
-                    textAnchor="middle"
-                    className="fill-current text-[11px] font-medium opacity-80"
-                  >
-                    {row.category}
-                  </text>
+                return (
+                  <g key={row.id}>
+                    {showTickLabel && (
+                      <text
+                        x={padLeft + rIdx * bandW + bandW / 2}
+                        y={padTop + plotH + 20}
+                        textAnchor="middle"
+                        className="fill-current text-[11px] font-medium opacity-80"
+                      >
+                        {row.category}
+                      </text>
+                    )}
 
-                  {series.map((s, sIdx) => {
-                    const color =
-                      s.color || paletteColors[sIdx % paletteColors.length]
-                    const val = Math.max(0, Number(row.values[s.id]) || 0)
-                    const barH = (val / niceMax) * plotH
+                    {series.map((s, sIdx) => {
+                      const color =
+                        s.color || paletteColors[sIdx % paletteColors.length]
+                      const val = Math.max(0, Number(row.values[s.id]) || 0)
+                      const barH = (val / niceMax) * plotH
 
-                    if (isStackedBar) {
-                      const y = stackBottom - barH
-                      stackBottom = y
+                      if (isStackedBar) {
+                        const y = stackBottom - barH
+                        stackBottom = y
+                        return (
+                          <g key={s.id}>
+                            <rect
+                              x={groupLeft}
+                              y={y}
+                              width={groupW}
+                              height={Math.max(0, barH)}
+                              rx={config.options.barRadius}
+                              fill={color}
+                              className="cursor-pointer transition-opacity hover:opacity-85"
+                              onMouseEnter={() =>
+                                setTooltip({
+                                  title: row.category || `Row ${rIdx + 1}`,
+                                  subtitle: s.name || `Series ${sIdx + 1}`,
+                                  value: val.toLocaleString(),
+                                  color,
+                                })
+                              }
+                              onMouseLeave={() => setTooltip(null)}
+                            />
+                          </g>
+                        )
+                      }
+
+                      const singleW = groupW / Math.max(1, series.length)
+                      const x = groupLeft + sIdx * singleW + 1.5
+                      const y = padTop + plotH - barH
                       return (
                         <g key={s.id}>
                           <rect
-                            x={groupLeft}
+                            x={x}
                             y={y}
-                            width={groupW}
+                            width={Math.max(2, singleW - 3)}
                             height={Math.max(0, barH)}
-                            rx={config.options.barRadius}
+                            rx={Math.min(
+                              config.options.barRadius,
+                              Math.max(0, (singleW - 3) / 2),
+                            )}
                             fill={color}
                             className="cursor-pointer transition-opacity hover:opacity-85"
                             onMouseEnter={() =>
                               setTooltip({
-                                title: row.category,
-                                subtitle: s.name,
+                                title: row.category || `Row ${rIdx + 1}`,
+                                subtitle: s.name || `Series ${sIdx + 1}`,
                                 value: val.toLocaleString(),
                                 color,
                               })
                             }
                             onMouseLeave={() => setTooltip(null)}
                           />
+                          {config.showValueLabels &&
+                            barH > 12 &&
+                            showTickLabel && (
+                              <text
+                                x={x + Math.max(2, singleW - 3) / 2}
+                                y={y - 6}
+                                textAnchor="middle"
+                                className="fill-current text-[10px] font-semibold opacity-75"
+                              >
+                                {val.toLocaleString()}
+                              </text>
+                            )}
                         </g>
                       )
-                    }
-
-                    const singleW = groupW / Math.max(1, series.length)
-                    const x = groupLeft + sIdx * singleW + 1.5
-                    const y = padTop + plotH - barH
-                    return (
-                      <g key={s.id}>
-                        <rect
-                          x={x}
-                          y={y}
-                          width={Math.max(3, singleW - 3)}
-                          height={Math.max(0, barH)}
-                          rx={Math.min(
-                            config.options.barRadius,
-                            (singleW - 3) / 2,
-                          )}
-                          fill={color}
-                          className="cursor-pointer transition-opacity hover:opacity-85"
-                          onMouseEnter={() =>
-                            setTooltip({
-                              title: row.category,
-                              subtitle: s.name,
-                              value: val.toLocaleString(),
-                              color,
-                            })
-                          }
-                          onMouseLeave={() => setTooltip(null)}
-                        />
-                        {config.showValueLabels && barH > 12 && (
-                          <text
-                            x={x + (singleW - 3) / 2}
-                            y={y - 6}
-                            textAnchor="middle"
-                            className="fill-current text-[10px] font-semibold opacity-75"
-                          >
-                            {val.toLocaleString()}
-                          </text>
-                        )}
-                      </g>
-                    )
-                  })}
-                </g>
-              )
-            })}
+                    })}
+                  </g>
+                )
+              })
+            })()}
 
           {/* LINE & AREA RENDERER */}
           {(chartType === 'line' || chartType === 'area') && (
             <>
-              {/* X-Axis Category Labels */}
-              {rows.map((row, rIdx) => {
-                const x =
-                  rows.length === 1
-                    ? padLeft + plotW / 2
-                    : padLeft + (rIdx / (rows.length - 1)) * plotW
-                return (
-                  <text
-                    key={row.id}
-                    x={x}
-                    y={padTop + plotH + 20}
-                    textAnchor="middle"
-                    className="fill-current text-[11px] font-medium opacity-80"
-                  >
-                    {row.category}
-                  </text>
-                )
-              })}
+              {/* X-Axis Category Labels (Auto-thinned when rows > 10) */}
+              {(() => {
+                const tickStep =
+                  rows.length > 10 ? Math.ceil(rows.length / 10) : 1
+                return rows.map((row, rIdx) => {
+                  const showTickLabel =
+                    rows.length <= 10 ||
+                    rIdx % tickStep === 0 ||
+                    rIdx === rows.length - 1
+                  if (!showTickLabel) return null
+                  const x =
+                    rows.length === 1
+                      ? padLeft + plotW / 2
+                      : padLeft + (rIdx / (rows.length - 1)) * plotW
+                  return (
+                    <text
+                      key={row.id}
+                      x={x}
+                      y={padTop + plotH + 20}
+                      textAnchor="middle"
+                      className="fill-current text-[11px] font-medium opacity-80"
+                    >
+                      {row.category}
+                    </text>
+                  )
+                })
+              })()}
 
               {series.map((s, sIdx) => {
                 const color =
@@ -647,7 +674,12 @@ export function ChartCanvas({
                       ? padLeft + plotW / 2
                       : padLeft + (rIdx / (rows.length - 1)) * plotW
                   const y = padTop + plotH - (val / niceMax) * plotH
-                  return { x, y, val, category: row.category }
+                  return {
+                    x,
+                    y,
+                    val,
+                    category: row.category || `Row ${rIdx + 1}`,
+                  }
                 })
 
                 const linePath = buildCurvePath(pts, config.options.curveType)
@@ -657,6 +689,7 @@ export function ChartCanvas({
                     ? `${linePath} L ${pts[pts.length - 1].x.toFixed(1)} ${areaBaselineY} L ${pts[0].x.toFixed(1)} ${areaBaselineY} Z`
                     : ''
                 const gradId = `area-grad-${s.id}`
+                const dotRadius = rows.length > 30 ? 3 : 5
 
                 return (
                   <g key={s.id}>
@@ -703,7 +736,7 @@ export function ChartCanvas({
                           <circle
                             cx={p.x}
                             cy={p.y}
-                            r={5}
+                            r={dotRadius}
                             fill={color}
                             stroke="#fff"
                             strokeWidth={1.75}
@@ -711,7 +744,7 @@ export function ChartCanvas({
                             onMouseEnter={() =>
                               setTooltip({
                                 title: p.category,
-                                subtitle: s.name,
+                                subtitle: s.name || `Series ${sIdx + 1}`,
                                 value: p.val.toLocaleString(),
                                 color,
                               })
@@ -937,7 +970,7 @@ export function ChartCanvas({
               x={padLeft + plotW / 2}
               y={height - 10}
               textAnchor="middle"
-              className="fill-current text-[11px] font-semibold opacity-75"
+              className="fill-current text-[11px] font-semibold opacity-75 [.interactive-canvas_&]:hidden"
             >
               {config.xAxisLabel}
             </text>
@@ -948,7 +981,7 @@ export function ChartCanvas({
               y={padTop + plotH / 2}
               textAnchor="middle"
               transform={`rotate(-90, 16, ${padTop + plotH / 2})`}
-              className="fill-current text-[11px] font-semibold opacity-75"
+              className="fill-current text-[11px] font-semibold opacity-75 [.interactive-canvas_&]:hidden"
             >
               {config.yAxisLabel}
             </text>
@@ -1155,39 +1188,27 @@ export function ChartCanvas({
     return null
   }
 
+  const showInteractiveAxes =
+    !compact && Boolean(supportsAxes && onAxisLabelChange)
+
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border border-border/60 bg-card ${
-        compact ? 'p-3' : 'p-6 sm:p-8'
-      }`}
+      className={`relative flex flex-col min-w-0 ${
+        compact
+          ? 'p-2.5 bg-transparent'
+          : 'rounded-2xl border border-border/60 bg-card p-3 sm:p-4'
+      } ${showInteractiveAxes ? 'interactive-canvas' : ''}`}
       data-testid="chart-visualization-container"
       data-chart-type={chartType}
     >
-      {/* Header Title & Subtitle */}
-      {!compact && (
-        <div className="mb-6 flex flex-col justify-start">
-          <h3
-            className="text-xl font-semibold tracking-tight text-foreground pr-44"
-            data-testid="chart-rendered-title"
-          >
-            {config.title || 'Untitled Visualization'}
-          </h3>
-          {config.subtitle && (
-            <p className="text-muted-foreground pr-44">
-              {config.subtitle}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Floating Hover Tooltip (Absolute, Zero Layout Shift) */}
       {!compact && tooltip && (
-        <div className="animate-in fade-in zoom-in-95 duration-150 pointer-events-none absolute right-6 sm:right-8 top-6 sm:top-8 z-10 flex items-center gap-2 rounded-lg border border-border/70 bg-popover/95 px-3 py-1.5 shadow-md backdrop-blur-xs">
+        <div className="animate-in fade-in zoom-in-95 duration-150 pointer-events-none absolute right-3 top-3 sm:right-4 sm:top-4 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-lg border border-border/70 bg-popover/95 px-2.5 py-1 sm:px-3 sm:py-1.5 shadow-md backdrop-blur-xs">
           <span
             className="h-2.5 w-2.5 rounded-full shrink-0"
             style={{ backgroundColor: tooltip.color }}
           />
-          <div className="text-xs sm:text-sm">
+          <div className="truncate text-xs sm:text-sm">
             <span className="font-medium">{tooltip.title}</span>
             {tooltip.subtitle && (
               <span className="text-muted-foreground">
@@ -1204,11 +1225,11 @@ export function ChartCanvas({
 
       {/* Top Legend */}
       {config.showLegend && config.legendPosition === 'top' && !compact && (
-        <div className="mb-5 flex flex-wrap items-center justify-start gap-5">
+        <div className="mb-2.5 flex flex-wrap items-center justify-start gap-3 sm:gap-5 text-xs sm:text-sm">
           {legendItems.map((item) => (
-            <div key={item.id} className="inline-flex items-center gap-2">
+            <div key={item.id} className="inline-flex items-center gap-1.5 sm:gap-2">
               <span
-                className="h-2.5 w-2.5 rounded-full"
+                className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}
               />
               <span className="font-medium text-muted-foreground">
@@ -1220,13 +1241,30 @@ export function ChartCanvas({
       )}
 
       <div
-        className={`flex items-center gap-6 ${
+        className={`flex items-center gap-4 sm:gap-6 ${
           config.showLegend && config.legendPosition === 'right' && !compact
             ? 'flex-col lg:flex-row'
             : 'flex-col'
         }`}
       >
         <div className="w-full flex-1 overflow-hidden">
+          {/* Top-Left Y-Axis Inline Input */}
+          {showInteractiveAxes && (
+            <div className="mb-1 flex items-center justify-start pl-1">
+              <input
+                type="text"
+                value={config.yAxisLabel}
+                onChange={(e) =>
+                  onAxisLabelChange?.('yAxisLabel', e.target.value)
+                }
+                placeholder="Y-Axis label..."
+                aria-label="Y-Axis Label"
+                data-testid="inline-yaxis-input"
+                className="w-36 sm:w-44 rounded-md border border-transparent bg-transparent px-2 py-0.5 text-xs font-medium text-muted-foreground placeholder:text-muted-foreground/45 hover:border-border/60 hover:bg-muted/30 focus:border-ring focus:bg-background focus:text-foreground focus:outline-none transition-colors"
+              />
+            </div>
+          )}
+
           <svg
             ref={svgRef}
             viewBox={`0 0 ${width} ${height}`}
@@ -1236,13 +1274,30 @@ export function ChartCanvas({
           >
             {renderCartesianOrRadialSvg()}
           </svg>
+
+          {/* Bottom-Center X-Axis Inline Input */}
+          {showInteractiveAxes && (
+            <div className="-mt-1 sm:-mt-2 flex items-center justify-center">
+              <input
+                type="text"
+                value={config.xAxisLabel}
+                onChange={(e) =>
+                  onAxisLabelChange?.('xAxisLabel', e.target.value)
+                }
+                placeholder="X-Axis label..."
+                aria-label="X-Axis Label"
+                data-testid="inline-xaxis-input"
+                className="w-40 sm:w-52 rounded-md border border-transparent bg-transparent px-2.5 py-0.5 text-center text-xs font-medium text-muted-foreground placeholder:text-muted-foreground/45 hover:border-border/60 hover:bg-muted/30 focus:border-ring focus:bg-background focus:text-foreground focus:outline-none transition-colors"
+              />
+            </div>
+          )}
         </div>
 
         {/* Right Legend */}
         {config.showLegend && config.legendPosition === 'right' && !compact && (
-          <div className="flex flex-wrap lg:flex-col gap-3 border-t lg:border-t-0 lg:border-l border-border/50 pt-4 lg:pt-0 lg:pl-6 min-w-[160px]">
+          <div className="w-full lg:w-auto flex flex-wrap lg:flex-col gap-3 border-t lg:border-t-0 lg:border-l border-border/50 pt-3 lg:pt-0 lg:pl-6 lg:min-w-[160px] text-xs sm:text-sm">
             {legendItems.map((item) => (
-              <div key={item.id} className="inline-flex items-center gap-2">
+              <div key={item.id} className="inline-flex items-center gap-1.5 sm:gap-2">
                 <span
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
@@ -1258,11 +1313,11 @@ export function ChartCanvas({
 
       {/* Bottom Legend */}
       {config.showLegend && config.legendPosition === 'bottom' && !compact && (
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-5 border-t border-border/40 pt-4">
+        <div className="mt-3.5 sm:mt-5 flex flex-wrap items-center justify-center gap-3 sm:gap-5 border-t border-border/40 pt-3 sm:pt-4 text-xs sm:text-sm">
           {legendItems.map((item) => (
-            <div key={item.id} className="inline-flex items-center gap-2">
+            <div key={item.id} className="inline-flex items-center gap-1.5 sm:gap-2">
               <span
-                className="h-2.5 w-2.5 rounded-full"
+                className="h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: item.color }}
               />
               <span className="font-medium text-muted-foreground">

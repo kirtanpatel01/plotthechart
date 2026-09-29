@@ -4,6 +4,7 @@ import { useServerFn } from '@tanstack/react-start'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   BarChart3,
+  Calendar,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -15,7 +16,6 @@ import {
   Layers,
   LineChart,
   PieChart,
-  Play,
   Radar,
   Save,
   ScatterChart,
@@ -23,17 +23,33 @@ import {
   X,
 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import {
   CHART_TYPES_LIST,
+  filterChartDataByTimeRange,
+   formatLocalIsoDate,
   getChartDefinition,
+  getNextUntitledName,
+  getTodayIsoDate,
 } from '#/lib/charts/registry'
+import { authClient } from '#/lib/auth-client'
 import { saveChartProjectFn } from '#/lib/charts/projects.functions'
 import type { SerializedChartProject } from '#/lib/charts/projects.functions'
+import { PALETTES } from '#/lib/charts/types'
 import type {
   AnyChartData,
   ChartConfig,
   ChartTypeId,
   DataSchemaKind,
+  PaletteId,
+  TimeRangePreset,
 } from '#/lib/charts/types'
 import { ScrollArea } from '#/components/ui/scroll-area'
 import { ChartCanvas } from './ChartCanvas'
@@ -80,6 +96,22 @@ export function ChartStudio({
   const queryClient = useQueryClient()
   const saveProjectServerFn = useServerFn(saveChartProjectFn)
   const svgRef = useRef<SVGSVGElement | null>(null)
+  const customizePopoverRef = useRef<HTMLDivElement | null>(null)
+
+  const getCachedProjectNames = (): Array<string> => {
+    const entries = queryClient.getQueriesData<Array<SerializedChartProject>>({
+      queryKey: ['chart-projects'],
+    })
+    const names: Array<string> = []
+    for (const [, list] of entries) {
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          if (item?.name) names.push(item.name)
+        }
+      }
+    }
+    return names
+  }
 
   const initialType: ChartTypeId =
     initialProject?.chartType ?? initialChartType ?? 'bar'
@@ -89,9 +121,19 @@ export function ChartStudio({
   const [data, setData] = useState<AnyChartData>(
     () => initialProject?.dataPayload ?? initialDef.defaultData(),
   )
-  const [config, setConfig] = useState<ChartConfig>(
-    () => initialProject?.configPayload ?? initialDef.defaultConfig(),
-  )
+  const [config, setConfig] = useState<ChartConfig>(() => {
+    if (initialProject?.configPayload) {
+      return {
+        ...initialProject.configPayload,
+        title: initialProject.name || initialProject.configPayload.title || '',
+        subtitle:
+          initialProject.description ||
+          initialProject.configPayload.subtitle ||
+          '',
+      }
+    }
+    return initialDef.defaultConfig()
+  })
   const [projectName, setProjectName] = useState<string>(
     initialProject?.name ?? '',
   )
@@ -101,6 +143,9 @@ export function ChartStudio({
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
     initialProject?.id,
   )
+  const [defaultUntitledTitle, setDefaultUntitledTitle] = useState<string>(
+    () => getNextUntitledName(getCachedProjectNames(), false),
+  )
 
   // Cache per-schema-kind data in memory so switching between schemas preserves user edits
   const [schemaDrafts, setSchemaDrafts] = useState<
@@ -109,13 +154,8 @@ export function ChartStudio({
     [data.schemaKind]: data,
   }))
 
-  // Track whether the user has explicitly generated the chart (unlocking Save)
-  const [hasGenerated, setHasGenerated] = useState<boolean>(
-    Boolean(initialProject?.id),
-  )
-  const [generationCount, setGenerationCount] = useState<number>(
-    initialProject?.id ? 1 : 0,
-  )
+  const { data: session } = authClient.useSession()
+  const [isSaving, setIsSaving] = useState(false)
   const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [saveSuccessBanner, setSaveSuccessBanner] = useState<{
     projectId: string
@@ -124,18 +164,66 @@ export function ChartStudio({
   const [showRawJson, setShowRawJson] = useState(false)
   const [copiedJson, setCopiedJson] = useState(false)
   const [showChartSettings, setShowChartSettings] = useState(false)
+  const [timeRange, setTimeRange] = useState<TimeRangePreset>('all')
+  const [customStartDate, setCustomStartDate] = useState<string>(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return formatLocalIsoDate(d)
+  })
+  const [customEndDate, setCustomEndDate] = useState<string>(() =>
+    getTodayIsoDate(),
+  )
+
+  // Close floating Customize popover on outside click or Escape
+  useEffect(() => {
+    if (!showChartSettings) return
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      if (customizePopoverRef.current?.contains(target)) return
+      // Ignore clicks inside Radix Select portaled poppers
+      if (
+        target.closest('[data-radix-popper-content-wrapper]') ||
+        target.closest('[data-slot^="select-"]')
+      ) {
+        return
+      }
+      setShowChartSettings(false)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowChartSettings(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('touchstart', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('touchstart', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showChartSettings])
 
   // Synchronize state when navigating to a different ?projectId=...
   useEffect(() => {
     if (initialProject) {
       setChartType(initialProject.chartType)
       setData(initialProject.dataPayload)
-      setConfig(initialProject.configPayload)
+      setConfig({
+        ...initialProject.configPayload,
+        title: initialProject.name || initialProject.configPayload.title || '',
+        subtitle:
+          initialProject.description ||
+          initialProject.configPayload.subtitle ||
+          '',
+      })
       setProjectName(initialProject.name)
       setProjectDescription(initialProject.description)
       setActiveProjectId(initialProject.id)
-      setHasGenerated(true)
-      setGenerationCount((c) => Math.max(1, c))
       setSchemaDrafts((prev) => ({
         ...prev,
         [initialProject.dataPayload.schemaKind]: initialProject.dataPayload,
@@ -155,13 +243,12 @@ export function ChartStudio({
           config,
           projectName,
           projectDescription,
-          hasGenerated,
         }),
       )
     } catch {
       // Ignore storage quota errors
     }
-  }, [chartType, data, config, projectName, projectDescription, hasGenerated])
+  }, [chartType, data, config, projectName, projectDescription])
 
   const currentDef = getChartDefinition(chartType)
 
@@ -192,21 +279,8 @@ export function ChartStudio({
     setData(nextData)
     setConfig((prev) => ({
       ...prev,
-      // Update title/axes only if they still match the previous chart type's default
-      title:
-        prev.title === currentDef.defaultConfig().title
-          ? nextDefaultCfg.title
-          : prev.title,
-      subtitle:
-        prev.subtitle === currentDef.defaultConfig().subtitle
-          ? nextDefaultCfg.subtitle
-          : prev.subtitle,
-      xAxisLabel: nextDef.supportsAxes
-        ? prev.xAxisLabel || nextDefaultCfg.xAxisLabel
-        : '',
-      yAxisLabel: nextDef.supportsAxes
-        ? prev.yAxisLabel || nextDefaultCfg.yAxisLabel
-        : '',
+      xAxisLabel: nextDef.supportsAxes ? prev.xAxisLabel : '',
+      yAxisLabel: nextDef.supportsAxes ? prev.yAxisLabel : '',
       options: {
         ...nextDefaultCfg.options,
         ...prev.options,
@@ -224,15 +298,10 @@ export function ChartStudio({
     setSaveSuccessBanner(null)
   }
 
-  const handleGenerateChart = () => {
-    setHasGenerated(true)
-    setGenerationCount((c) => c + 1)
-    setSaveSuccessBanner(null)
-  }
-
   const handleNewBlankChart = () => {
     const def = getChartDefinition('bar')
     const freshData = def.defaultData()
+    const nextUntitled = getNextUntitledName(getCachedProjectNames(), false)
     setActiveProjectId(undefined)
     setChartType('bar')
     setData(freshData)
@@ -240,8 +309,7 @@ export function ChartStudio({
     setConfig(def.defaultConfig())
     setProjectName('')
     setProjectDescription('')
-    setHasGenerated(false)
-    setGenerationCount(0)
+    setDefaultUntitledTitle(nextUntitled)
     setSaveSuccessBanner(null)
     if (typeof window !== 'undefined') {
       try {
@@ -263,7 +331,9 @@ export function ChartStudio({
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${(config.title || chartType).toLowerCase().replace(/[^a-z0-9]+/g, '-')}.svg`
+    const exportTitle =
+      config.title.trim() || projectName.trim() || defaultUntitledTitle
+    link.download = `${exportTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.svg`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -274,19 +344,30 @@ export function ChartStudio({
     name: string
     description: string
   }) => {
+    const resolvedName =
+      details.name.trim() ||
+      config.title.trim() ||
+      getNextUntitledName(getCachedProjectNames(), true)
+    const resolvedDescription = details.description.trim()
+    const updatedConfig: ChartConfig = {
+      ...config,
+      title: resolvedName,
+      subtitle: resolvedDescription,
+    }
     const saved = await saveProjectServerFn({
       data: {
         id: activeProjectId,
-        name: details.name,
-        description: details.description,
+        name: resolvedName,
+        description: resolvedDescription,
         chartType,
         dataPayload: data,
-        configPayload: config,
+        configPayload: updatedConfig,
       },
     })
     setActiveProjectId(saved.id)
     setProjectName(saved.name)
     setProjectDescription(saved.description)
+    setConfig(updatedConfig)
     setSaveSuccessBanner({ projectId: saved.id, name: saved.name })
     await queryClient.invalidateQueries({ queryKey: ['chart-projects'] })
     await router.invalidate()
@@ -297,76 +378,121 @@ export function ChartStudio({
     })
   }
 
+  const handleSaveAction = async () => {
+    if (!session?.user && !activeProjectId) {
+      setSaveModalOpen(true)
+      return
+    }
+    setIsSaving(true)
+    try {
+      await handleSaveConfirmed({
+        name: config.title.trim() || projectName.trim() || defaultUntitledTitle,
+        description: config.subtitle.trim() || projectDescription.trim(),
+      })
+    } catch {
+      setSaveModalOpen(true)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
-    <div className="w-full p-4 space-y-8">
-      {/* Simplified Top Workspace Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground truncate">
-            {activeProjectId
-              ? projectName || config.title
-              : config.title || 'Untitled Chart'}
-          </h1>
-          <p className="text-muted-foreground mt-0.5">
-            {currentDef.label}
-          </p>
+    <div className="w-full min-w-0 p-3 sm:p-4 space-y-5 sm:space-y-8">
+      {/* Top Workspace Header with Direct Inline Title & Description Inputs */}
+      <div className="flex flex-col gap-3 border-b border-border/50 pb-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 w-full sm:flex-1 max-w-2xl space-y-1">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={config.title}
+              onChange={(e) => {
+                const val = e.target.value
+                setProjectName(val)
+                setConfig((prev) => ({ ...prev, title: val }))
+                setSaveSuccessBanner(null)
+              }}
+              placeholder={defaultUntitledTitle}
+              aria-label="Chart Title"
+              data-testid="chart-title-input"
+              className="w-full rounded-lg border border-transparent bg-transparent px-2 py-0.5 -ml-2 text-xl sm:text-2xl font-semibold tracking-tight text-foreground placeholder:text-muted-foreground/45 hover:border-border/60 hover:bg-muted/25 focus:border-ring focus:bg-background focus:outline-none transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={config.subtitle}
+              onChange={(e) => {
+                const val = e.target.value
+                setProjectDescription(val)
+                setConfig((prev) => ({ ...prev, subtitle: val }))
+                setSaveSuccessBanner(null)
+              }}
+              placeholder="Add a description..."
+              aria-label="Chart Description"
+              data-testid="chart-subtitle-input"
+              className="w-full rounded-md border border-transparent bg-transparent px-2 py-0.5 -ml-2 text-sm text-muted-foreground placeholder:text-muted-foreground/45 hover:border-border/60 hover:bg-muted/25 focus:border-ring focus:bg-background focus:text-foreground focus:outline-none transition-colors"
+            />
+          </div>
         </div>
 
         {/* Primary Workflow Actions */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {activeProjectId && (
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={handleNewBlankChart}
-              data-testid="new-chart-project-btn"
-            >
-              <FilePlus2 className="h-4 w-4" />
-              New
-            </Button>
-          )}
+        <div className="flex items-center gap-2 sm:pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground sm:h-9 sm:px-3"
+            onClick={handleNewBlankChart}
+            data-testid="new-chart-project-btn"
+          >
+            <FilePlus2 className="h-4 w-4" />
+            New
+          </Button>
 
-          {hasGenerated ? (
-            <Button
-              type="button"
-              onClick={() => setSaveModalOpen(true)}
-              data-testid="save-project-btn"
-            >
-              <Save className="h-4 w-4" />
-              {activeProjectId ? 'Update Project' : 'Save Project'}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              title="Click 'Generate Chart' first to unlock saving"
-              className="opacity-50"
-              data-testid="save-project-btn-disabled"
-            >
-              <Save className="h-4 w-4" />
-              Save Project
-            </Button>
-          )}
+          <Button
+            type="button"
+            size="sm"
+            className="sm:h-9 sm:px-3.5"
+            disabled={isSaving}
+            onClick={handleSaveAction}
+            data-testid="save-project-btn"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving
+              ? activeProjectId
+                ? 'Updating...'
+                : 'Saving...'
+              : activeProjectId
+                ? 'Update Project'
+                : 'Save Project'}
+          </Button>
         </div>
       </div>
 
       {/* Save Confirmation Banner */}
       {saveSuccessBanner && (
         <div
-          className="animate-in fade-in zoom-in-95 duration-200 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-emerald-950 dark:text-emerald-200"
+          className="animate-in fade-in zoom-in-95 duration-200 relative flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 sm:px-4 sm:py-3 text-sm text-emerald-950 dark:text-emerald-200"
           data-testid="save-success-banner"
         >
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSaveSuccessBanner(null)}
+            aria-label="Dismiss save notification"
+            title="Dismiss"
+            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-500/40 bg-background text-emerald-700 shadow-xs hover:bg-emerald-50 hover:text-emerald-950 dark:border-emerald-500/50 dark:bg-card dark:text-emerald-300 dark:hover:bg-emerald-950 transition-colors"
+          >
+            <X className="h-3 w-3" />
+          </button>
+          <div className="flex items-center gap-2 min-w-0">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>
+            <span className="truncate">
               Saved <strong>{saveSuccessBanner.name}</strong> to your projects.
             </span>
           </div>
           <Link
             to="/dashboard"
-            className="font-semibold underline hover:opacity-80"
+            className="font-semibold underline hover:opacity-80 text-xs sm:text-sm shrink-0"
           >
             View in Saved Projects →
           </Link>
@@ -374,79 +500,74 @@ export function ChartStudio({
       )}
 
       {/* Main Side-by-Side Workspace with Generous Breathing Room */}
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start xl:gap-12">
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12 lg:items-start lg:gap-10 xl:gap-12">
         {/* LEFT COLUMN: DATA / INPUT PANEL */}
         <section
-          className="lg:col-span-5 space-y-5"
+          className="lg:col-span-5 min-w-0 space-y-4 sm:space-y-5"
           aria-label="Data and Input Panel"
           data-testid="data-input-panel"
         >
-          {/* Compact Chart Type Pill Selector */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Data
-              </h2>
+          {/* Data Header & Chart Type Selector */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+              Data
+            </h2>
 
-              {/* Secondary Data Toolbar: Schema JSON */}
-              <div className="relative flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant={showRawJson ? 'secondary' : 'ghost'}
+            {/* Data Toolbar: Chart Type Selector + Schema JSON */}
+            <div className="relative flex flex-wrap items-center gap-2">
+              <Select
+                value={chartType}
+                onValueChange={(val) =>
+                  handleSelectChartType(val as ChartTypeId)
+                }
+              >
+                <SelectTrigger
                   size="sm"
-                  onClick={() => setShowRawJson((v) => !v)}
-                  className="text-muted-foreground hover:text-foreground"
-                  title="Inspect raw data schema JSON"
+                  aria-label="Chart Type"
+                  data-testid="chart-type-select-trigger"
+                  className="h-8 gap-2 px-2.5 text-xs"
                 >
-                  <Code2 className="h-4 w-4" />
-                  JSON
-                </Button>
-              </div>
-            </div>
+                  <SelectValue placeholder="Select chart type" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {CHART_TYPES_LIST.map((item) => {
+                    const Icon = CHART_ICONS[item.type] || BarChart3
+                    return (
+                      <SelectItem
+                        key={item.type}
+                        value={item.type}
+                        data-testid={`chart-type-option-${item.type}`}
+                      >
+                        <Icon className="h-4 w-4 text-primary" />
+                        <span>{SHORT_CHART_LABELS[item.type] ?? item.label}</span>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
 
-            {/* Segmented Pill Bar for Chart Types */}
-            <div
-              className="flex flex-wrap items-center gap-1 rounded-xl border border-border/60 bg-muted/25 p-1.5"
-              role="radiogroup"
-              aria-label="Chart Type"
-            >
-              {CHART_TYPES_LIST.map((item) => {
-                const Icon = CHART_ICONS[item.type] || BarChart3
-                const isSelected = chartType === item.type
-                return (
-                  <button
-                    key={item.type}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    data-testid={`chart-type-btn-${item.type}`}
-                    onClick={() => handleSelectChartType(item.type)}
-                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-medium transition-all duration-150 active:scale-[0.98] ${
-                      isSelected
-                        ? 'bg-background text-foreground shadow-2xs ring-1 ring-border/80'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className={`h-4 w-4 ${
-                        isSelected ? 'text-primary' : 'opacity-70'
-                      }`}
-                    />
-                    <span>{SHORT_CHART_LABELS[item.type] ?? item.label}</span>
-                  </button>
-                )
-              })}
+              <Button
+                type="button"
+                variant={showRawJson ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowRawJson((v) => !v)}
+                className="text-muted-foreground hover:text-foreground"
+                title="Inspect raw data schema JSON"
+              >
+                <Code2 className="h-4 w-4" />
+                JSON
+              </Button>
             </div>
           </div>
 
           {/* Raw JSON Schema Inspector (Progressive Disclosure) */}
           {showRawJson && (
-            <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-4 space-y-2">
-              <div className="flex items-center justify-between text-muted-foreground text-sm">
-                <span>
+            <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-3.5 sm:p-4 space-y-2">
+              <div className="flex items-center justify-between text-muted-foreground text-xs sm:text-sm">
+                <span className="truncate">
                   Schema: <code className="text-foreground font-mono">{data.schemaKind}</code>
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     type="button"
                     variant="ghost"
@@ -492,7 +613,7 @@ export function ChartStudio({
           )}
 
           {/* Primary Focus: Adaptive Data Input Table / Editor */}
-          <div>
+          <div className="min-w-0">
             {data.schemaKind === 'tabular-series' && (
               <TabularSeriesInput
                 data={data}
@@ -522,141 +643,246 @@ export function ChartStudio({
               />
             )}
           </div>
-
-          {/* Quiet Data Footer */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <span className="text-muted-foreground">
-              {hasGenerated ? (
-                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Ready to save ({generationCount}x)
-                </span>
-              ) : (
-                'Preview updates live as you edit.'
-              )}
-            </span>
-
-            <Button
-              type="button"
-              variant={hasGenerated ? 'secondary' : 'default'}
-              onClick={handleGenerateChart}
-              data-testid="generate-chart-btn"
-            >
-              <Play className="h-4 w-4" />
-              {hasGenerated ? 'Regenerate Chart' : 'Generate Chart'}
-            </Button>
-          </div>
         </section>
 
         {/* RIGHT COLUMN: CHART / VISUALIZATION PANEL (Visual Centerpiece) */}
         <section
-          className="lg:col-span-7 space-y-5"
+          className="lg:col-span-7 min-w-0 space-y-4 sm:space-y-5"
           aria-label="Chart and Visualization Panel"
           data-testid="chart-visualization-panel"
         >
           {/* Quiet Visualization Header & Secondary Actions */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Preview
-              </h2>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  hasGenerated
-                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-                data-testid="chart-generation-status"
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    hasGenerated ? 'bg-emerald-500' : 'bg-muted-foreground/60'
-                  }`}
-                />
-                {hasGenerated ? 'Generated' : 'Live Draft'}
-              </span>
-            </div>
+            <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
+              Preview
+            </h2>
 
-            {/* Unobtrusive Secondary Chart Controls */}
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant={showChartSettings ? 'secondary' : 'ghost'}
-                size="sm"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => setShowChartSettings((v) => !v)}
-                data-testid="toggle-chart-settings-btn"
+            {/* Secondary Chart Controls: Time Range + Palette Dropdown + Floating Customize Popover + Export */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <Select
+                value={timeRange}
+                onValueChange={(val) => setTimeRange(val as TimeRangePreset)}
               >
-                <SlidersHorizontal className="h-4 w-4" />
-                Customize
-                <ChevronDown
-                  className={`h-3.5 w-3.5 opacity-60 transition-transform duration-150 ${
-                    showChartSettings ? 'rotate-180' : ''
-                  }`}
-                />
-              </Button>
+                <SelectTrigger
+                  size="sm"
+                  aria-label="Time Range Filter"
+                  data-testid="time-range-select-trigger"
+                  className="h-8 gap-1.5 sm:gap-2 px-2 sm:px-2.5 text-xs"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <SelectValue placeholder="All Time" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="7d">Last Week</SelectItem>
+                  <SelectItem value="1m">Last Month</SelectItem>
+                  <SelectItem value="6m">Last 6 Months</SelectItem>
+                  <SelectItem value="1y">Last Year</SelectItem>
+                  <SelectItem value="custom">Custom Range...</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={config.palette}
+                onValueChange={(val) => {
+                  setConfig((prev) => ({
+                    ...prev,
+                    palette: val as PaletteId,
+                  }))
+                  setSaveSuccessBanner(null)
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  aria-label="Color Palette"
+                  data-testid="palette-select-trigger"
+                  className="h-8 gap-1.5 sm:gap-2 px-2 sm:px-2.5 text-xs"
+                >
+                  <SelectValue placeholder="Color Palette" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {(Object.keys(PALETTES) as Array<PaletteId>).map((pid) => {
+                    const p = PALETTES[pid]
+                    return (
+                      <SelectItem key={pid} value={pid}>
+                        <span className="flex items-center -space-x-1">
+                          {p.colors.slice(0, 4).map((hex) => (
+                            <span
+                              key={hex}
+                              className="h-2.5 w-2.5 rounded-full ring-1 ring-background"
+                              style={{ backgroundColor: hex }}
+                            />
+                          ))}
+                        </span>
+                        <span>{p.name}</span>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+
+              <div ref={customizePopoverRef} className="relative">
+                <Button
+                  type="button"
+                  variant={showChartSettings ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="px-2 sm:px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowChartSettings((v) => !v)}
+                  aria-expanded={showChartSettings}
+                  data-testid="toggle-chart-settings-btn"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span>Customize</span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 opacity-60 transition-transform duration-150 ${
+                      showChartSettings ? 'rotate-180' : ''
+                    }`}
+                  />
+                </Button>
+
+                {showChartSettings && (
+                  <div
+                    className="animate-in fade-in zoom-in-95 duration-150 fixed inset-x-3 top-20 z-50 max-h-[80dvh] overflow-y-auto rounded-2xl border border-border/80 bg-popover p-4 text-popover-foreground shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:z-30 sm:w-[460px] sm:p-5"
+                    role="dialog"
+                    aria-label="Customize Chart Options"
+                  >
+                    <div className="mb-3.5 flex items-center justify-between border-b border-border/50 pb-2.5">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Chart Options
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowChartSettings(false)}
+                        aria-label="Close chart options"
+                        className="cursor-pointer rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <ChartConfigPanel
+                      chartType={chartType}
+                      config={config}
+                      onChange={(nextCfg) => {
+                        setConfig(nextCfg)
+                        setSaveSuccessBanner(null)
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
 
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="px-2 sm:px-2.5 text-muted-foreground hover:text-foreground"
                 onClick={handleExportSvg}
               >
                 <Download className="h-4 w-4" />
-                Export SVG
+                <span>Export SVG</span>
               </Button>
-
-              {hasGenerated && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSaveModalOpen(true)}
-                  data-testid="panel-save-project-btn"
-                >
-                  <Save className="h-4 w-4" />
-                  {activeProjectId ? 'Update' : 'Save'}
-                </Button>
-              )}
             </div>
           </div>
 
-          {/* Dominant Interactive SVG Chart Canvas */}
-          <ChartCanvas
-            chartType={chartType}
-            data={data}
-            config={config}
-            svgRef={svgRef}
-          />
+          {(() => {
+            const { filteredData, matchedCount, totalCount } =
+              filterChartDataByTimeRange(
+                data,
+                timeRange,
+                customStartDate,
+                customEndDate,
+              )
 
-          {/* Collapsible Chart Configuration Drawer / Section (Progressive Disclosure) */}
-          {showChartSettings && (
-            <div className="animate-in fade-in zoom-in-95 duration-200 rounded-2xl border border-border/70 bg-card/60 p-5 sm:p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-foreground">
-                  Chart Settings &amp; Styling
-                </h3>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowChartSettings(false)}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Done
-                </Button>
-              </div>
-              <ChartConfigPanel
-                chartType={chartType}
-                config={config}
-                onChange={(nextCfg) => {
-                  setConfig(nextCfg)
-                  setSaveSuccessBanner(null)
-                }}
-              />
-            </div>
-          )}
+            return (
+              <>
+                {timeRange === 'custom' && (
+                  <div
+                    className="animate-in fade-in zoom-in-95 duration-150 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-border/60 bg-muted/20 px-3 sm:px-3.5 py-2.5 text-xs"
+                    data-testid="custom-date-range-bar"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-muted-foreground">
+                        From
+                      </span>
+                      <Input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        aria-label="Custom range start date"
+                        className="h-7 flex-1 sm:flex-initial sm:w-auto bg-background px-2 text-xs font-mono"
+                      />
+                      <span className="font-medium text-muted-foreground">
+                        to
+                      </span>
+                      <Input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        aria-label="Custom range end date"
+                        className="h-7 flex-1 sm:flex-initial sm:w-auto bg-background px-2 text-xs font-mono"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="tabular-nums">
+                        Showing <strong className="text-foreground">{matchedCount}</strong> of{' '}
+                        <strong className="text-foreground">{totalCount}</strong> entries
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => setTimeRange('all')}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {timeRange !== 'all' && matchedCount === 0 ? (
+                  <div
+                    className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 bg-card p-8 text-center"
+                    data-testid="empty-time-range-state"
+                  >
+                    <Calendar className="h-8 w-8 text-muted-foreground/60" />
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        No entries in the selected time range
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        None of your {totalCount} entries fall within this date window.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTimeRange('all')}
+                    >
+                      Show All Time
+                    </Button>
+                  </div>
+                ) : (
+                  <ChartCanvas
+                    chartType={chartType}
+                    data={filteredData}
+                    config={config}
+                    svgRef={svgRef}
+                    supportsAxes={currentDef.supportsAxes}
+                    onAxisLabelChange={(axis, value) => {
+                      setConfig((prev) => ({
+                        ...prev,
+                        [axis]: value,
+                      }))
+                      setSaveSuccessBanner(null)
+                    }}
+                  />
+                )}
+              </>
+            )
+          })()}
         </section>
       </div>
 
@@ -664,8 +890,10 @@ export function ChartStudio({
       <SaveProjectModal
         open={saveModalOpen}
         onClose={() => setSaveModalOpen(false)}
-        initialName={projectName || config.title}
-        initialDescription={projectDescription || config.subtitle}
+        initialName={
+          config.title.trim() || projectName.trim() || defaultUntitledTitle
+        }
+        initialDescription={config.subtitle.trim() || projectDescription.trim()}
         isUpdatingExisting={Boolean(activeProjectId)}
         onSaveConfirmed={handleSaveConfirmed}
       />

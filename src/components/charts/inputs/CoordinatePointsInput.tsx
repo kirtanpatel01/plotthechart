@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { Plus, Sparkles, Trash2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
@@ -11,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { getTodayIsoDate } from '#/lib/charts/registry'
 import { PALETTES } from '#/lib/charts/types'
 import type { CoordinatePointsData, PaletteId } from '#/lib/charts/types'
 
@@ -26,6 +35,8 @@ export function CoordinatePointsInput({
   onChange,
 }: CoordinatePointsInputProps) {
   const [newGroupName, setNewGroupName] = useState('')
+  const [pageIndex, setPageIndex] = useState(0)
+  const [pageSize, setPageSize] = useState(8)
   const paletteColors = PALETTES[palette]?.colors ?? PALETTES.ocean.colors
 
   const handleAddGroup = () => {
@@ -80,6 +91,7 @@ export function CoordinatePointsInput({
         {
           id: `pt-${Date.now()}-${idx}`,
           label: '',
+          date: getTodayIsoDate(),
           groupId: defaultGroup.id,
           x: 0,
           y: 0,
@@ -87,18 +99,24 @@ export function CoordinatePointsInput({
         },
       ],
     })
+    setPageIndex(Math.max(0, Math.ceil(idx / pageSize) - 1))
   }
 
   const handleRemovePoint = (pointId: string) => {
     if (data.points.length <= 1) return
+    const nextCount = data.points.length - 1
     onChange({
       ...data,
       points: data.points.filter((pt) => pt.id !== pointId),
     })
+    setPageIndex((prev) =>
+      Math.min(prev, Math.max(0, Math.ceil(nextCount / pageSize) - 1)),
+    )
   }
 
   const handleGenerateCorrelatedCluster = () => {
     const generated: CoordinatePointsData['points'] = []
+    const today = getTodayIsoDate()
     data.groups.forEach((grp, gIdx) => {
       for (let i = 0; i < 4; i++) {
         const baseX = 18 + gIdx * 28 + i * 6
@@ -106,6 +124,7 @@ export function CoordinatePointsInput({
         generated.push({
           id: `pt-gen-${gIdx}-${i}-${Date.now()}`,
           label: `${grp.name.split(' ')[0]} #${i + 1}`,
+          date: today,
           groupId: grp.id,
           x: Math.min(100, Math.max(5, baseX)),
           y: Math.min(100, Math.max(10, baseY)),
@@ -117,15 +136,24 @@ export function CoordinatePointsInput({
       ...data,
       points: generated,
     })
+    setPageIndex(0)
   }
 
   const [showClusters, setShowClusters] = useState(false)
 
+  const totalPoints = data.points.length
+  const pageCount = Math.max(1, Math.ceil(totalPoints / pageSize))
+  const safePageIndex = Math.min(pageIndex, pageCount - 1)
+  const startIdx = safePageIndex * pageSize
+  const visiblePoints = data.points.slice(startIdx, startIdx + pageSize)
+  const startRow = totalPoints === 0 ? 0 : startIdx + 1
+  const endRow = Math.min(totalPoints, startIdx + pageSize)
+
   return (
-    <div className="space-y-4" data-testid="coordinate-points-input">
+    <div className="space-y-3.5 sm:space-y-4 min-w-0" data-testid="coordinate-points-input">
       {/* Primary Coordinate Points Table */}
-      <ScrollArea className="w-full rounded-xl border border-border/70 bg-card">
-        <table className="w-full border-collapse text-left">
+      <ScrollArea className="w-full max-w-full rounded-xl border border-border/70 bg-card">
+        <table className="w-full min-w-[500px] border-collapse text-left">
           <thead>
             <tr className="border-b border-border/70 bg-muted/30 font-semibold text-muted-foreground">
               <th className="px-3.5 py-2.5">Label</th>
@@ -137,7 +165,8 @@ export function CoordinatePointsInput({
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40">
-            {data.points.map((pt, idx) => {
+            {visiblePoints.map((pt, localIdx) => {
+              const idx = startIdx + localIdx
               const groupIdx = Math.max(
                 0,
                 data.groups.findIndex((g) => g.id === pt.groupId),
@@ -264,7 +293,7 @@ export function CoordinatePointsInput({
                       disabled={data.points.length <= 1}
                       onClick={() => handleRemovePoint(pt.id)}
                       title="Remove coordinate point"
-                      className="p-1.5 text-muted-foreground/50 hover:text-destructive disabled:opacity-20 transition-colors rounded"
+                      className="cursor-pointer p-1.5 text-muted-foreground/50 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-20 transition-colors rounded"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -276,6 +305,96 @@ export function CoordinatePointsInput({
         </table>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {/* Compact Pagination Footer */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 px-2.5 sm:px-3 py-1.5 text-xs text-muted-foreground"
+        data-testid="points-pagination-bar"
+      >
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums">
+            <span className="hidden sm:inline">Showing </span>
+            <strong className="font-medium text-foreground">{startRow}–{endRow}</strong> of{' '}
+            <strong className="font-medium text-foreground">{totalPoints}</strong>
+          </span>
+
+          <Select
+            value={String(pageSize)}
+            onValueChange={(val) => {
+              setPageSize(Number(val) || 8)
+              setPageIndex(0)
+            }}
+          >
+            <SelectTrigger
+              size="sm"
+              aria-label="Points per page"
+              className="h-7 gap-1 px-2 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="5">5 / page</SelectItem>
+              <SelectItem value="8">8 / page</SelectItem>
+              <SelectItem value="15">15 / page</SelectItem>
+              <SelectItem value="30">30 / page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex <= 0}
+            onClick={() => setPageIndex(0)}
+            title="First page"
+            aria-label="First page"
+          >
+            <ChevronsLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex <= 0}
+            onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+            title="Previous page"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="px-1.5 sm:px-2 tabular-nums font-medium text-foreground">
+            <span className="hidden sm:inline">Page </span>
+            {safePageIndex + 1}
+            <span className="hidden sm:inline"> of </span>
+            <span className="sm:hidden"> / </span>
+            {pageCount}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex >= pageCount - 1}
+            onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
+            title="Next page"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex >= pageCount - 1}
+            onClick={() => setPageIndex(pageCount - 1)}
+            title="Last page"
+            aria-label="Last page"
+          >
+            <ChevronsRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
 
       {/* Quiet Compact Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
@@ -317,17 +436,17 @@ export function CoordinatePointsInput({
 
       {/* Collapsible Cluster / Cohort Manager */}
       {showClusters && (
-        <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
+        <div className="animate-in fade-in zoom-in-95 duration-200 rounded-xl border border-border/70 bg-muted/20 p-3.5 sm:p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label className="text-muted-foreground">
               Clusters / Cohorts
             </Label>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <Input
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
                 placeholder="New cluster name..."
-                className="w-48 bg-background"
+                className="flex-1 sm:w-48 min-w-0 bg-background"
               />
               <Button
                 type="button"
@@ -350,7 +469,7 @@ export function CoordinatePointsInput({
               return (
                 <div
                   key={grp.id}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-background px-3 py-1.5"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-background px-2.5 sm:px-3 py-1.5"
                 >
                   <span
                     className="h-2.5 w-2.5 rounded-full shrink-0"
@@ -363,13 +482,13 @@ export function CoordinatePointsInput({
                       handleGroupNameChange(grp.id, e.target.value)
                     }
                     aria-label={`Cluster ${idx + 1} name`}
-                    className="w-32 bg-transparent font-medium focus:outline-none"
+                    className="w-28 sm:w-32 bg-transparent font-medium focus:outline-none"
                   />
                   {data.groups.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveGroup(grp.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      className="cursor-pointer text-muted-foreground hover:text-destructive transition-colors"
                       title="Delete cluster"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

@@ -189,7 +189,7 @@ function SignInPage() {
               setIsSignUp(!isSignUp)
               setError('')
             }}
-            className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+            className="cursor-pointer font-medium text-foreground underline underline-offset-4 hover:opacity-80"
           >
             {isSignUp ? 'Sign in' : 'Sign up'}
           </button>

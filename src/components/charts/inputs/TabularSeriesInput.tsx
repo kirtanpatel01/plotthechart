@@ -1,18 +1,39 @@
 import { useMemo, useRef, useState } from 'react'
 import {
   createColumnHelper,
+  createPaginatedRowModel,
+  rowPaginationFeature,
   tableFeatures,
   useTable,
 } from '@tanstack/react-table'
-import { FileSpreadsheet, Plus, Trash2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  FileSpreadsheet,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { ScrollArea, ScrollBar } from '#/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
+import { getTodayIsoDate } from '#/lib/charts/registry'
 import { PALETTES } from '#/lib/charts/types'
 import type { PaletteId, TabularSeriesData } from '#/lib/charts/types'
 
-const gridFeatures = tableFeatures({})
+const gridFeatures = tableFeatures({
+  rowPaginationFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+})
 
 type TabularRow = TabularSeriesData['rows'][number]
 
@@ -122,18 +143,31 @@ export function TabularSeriesInput({
         {
           id: `row-${Date.now()}-${nextIndex}`,
           category: '',
+          date: getTodayIsoDate(),
           values: defaultValues,
         },
       ],
     })
+    table.setPagination((prev) => ({
+      ...prev,
+      pageIndex: Math.max(0, Math.ceil(nextIndex / prev.pageSize) - 1),
+    }))
   }
 
   const handleRemoveRow = (rowId: string) => {
     if (data.rows.length <= 1) return
+    const nextCount = data.rows.length - 1
     onChange({
       ...data,
       rows: data.rows.filter((r) => r.id !== rowId),
     })
+    table.setPagination((prev) => ({
+      ...prev,
+      pageIndex: Math.min(
+        prev.pageIndex,
+        Math.max(0, Math.ceil(nextCount / prev.pageSize) - 1),
+      ),
+    }))
   }
 
   const handleApplyCsv = () => {
@@ -165,6 +199,7 @@ export function TabularSeriesInput({
       name: name || `Series ${idx + 1}`,
     }))
 
+    const today = getTodayIsoDate()
     const newRows = lines.slice(1).map((line, rIdx) => {
       const cells = splitLine(line)
       const values: Record<string, number> = {}
@@ -175,6 +210,7 @@ export function TabularSeriesInput({
       return {
         id: `row-${rIdx + 1}`,
         category: cells[0] || `Row ${rIdx + 1}`,
+        date: today,
         values,
       }
     })
@@ -185,6 +221,7 @@ export function TabularSeriesInput({
       series: newSeries,
       rows: newRows,
     })
+    table.setPagination((prev) => ({ ...prev, pageIndex: 0 }))
     setShowCsvImport(false)
     setCsvText('')
   }
@@ -235,15 +272,17 @@ export function TabularSeriesInput({
       cell: (info) => {
         const cur = latestRef.current
         const rowId = info.row.original.id
+        const globalIdx = cur.data.rows.findIndex((r) => r.id === rowId)
+        const displayRowNum = (globalIdx >= 0 ? globalIdx : info.row.index) + 1
         const row =
-          cur.data.rows.find((r) => r.id === rowId) ?? info.row.original
+          globalIdx >= 0 ? cur.data.rows[globalIdx] : info.row.original
         return (
           <div className="w-24">
             <Input
               value={row.category}
               onChange={(e) => cur.handleRowCategoryChange(row.id, e.target.value)}
-              placeholder={`Row ${info.row.index + 1}`}
-              aria-label={`Category name for row ${info.row.index + 1}`}
+              placeholder={`Row ${displayRowNum}`}
+              aria-label={`Category name for row ${displayRowNum}`}
               className="h-8 border-transparent bg-transparent px-2 font-medium hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
             />
           </div>
@@ -285,7 +324,7 @@ export function TabularSeriesInput({
                   type="button"
                   onClick={() => cur.handleRemoveSeries(s.id)}
                   title={`Remove ${s.name || `Series ${idx + 1}`}`}
-                  className="opacity-0 group-hover/col:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity p-0.5 rounded shrink-0"
+                  className="cursor-pointer opacity-0 group-hover/col:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity p-0.5 rounded shrink-0"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -296,8 +335,10 @@ export function TabularSeriesInput({
         cell: (info) => {
           const cur = latestRef.current
           const rowId = info.row.original.id
+          const globalIdx = cur.data.rows.findIndex((r) => r.id === rowId)
+          const displayRowNum = (globalIdx >= 0 ? globalIdx : info.row.index) + 1
           const row =
-            cur.data.rows.find((r) => r.id === rowId) ?? info.row.original
+            globalIdx >= 0 ? cur.data.rows[globalIdx] : info.row.original
           const s = cur.data.series.find((item) => item.id === seriesId)
           const currentVal = row.values[seriesId] ?? 0
           return (
@@ -310,7 +351,7 @@ export function TabularSeriesInput({
                 onChange={(e) =>
                   cur.handleCellValueChange(row.id, seriesId, e.target.value)
                 }
-                aria-label={`${s?.name || `Series ${idx + 1}`} value for ${row.category || `Row ${info.row.index + 1}`}`}
+                aria-label={`${s?.name || `Series ${idx + 1}`} value for ${row.category || `Row ${displayRowNum}`}`}
                 className="h-8 border-transparent bg-transparent px-2 font-mono tabular-nums text-xs hover:border-border/60 focus-visible:border-ring focus-visible:bg-background shadow-none"
               />
             </div>
@@ -321,7 +362,7 @@ export function TabularSeriesInput({
 
     const actionsCol = columnHelper.display({
       id: '__actions__',
-      header: () => <span className="sr-only">Row Actions</span>,
+      header: () => null,
       cell: (info) => {
         const cur = latestRef.current
         const rowId = info.row.original.id
@@ -331,7 +372,8 @@ export function TabularSeriesInput({
             disabled={cur.data.rows.length <= 1}
             onClick={() => cur.handleRemoveRow(rowId)}
             title="Delete row"
-            className="p-1.5 text-muted-foreground/50 hover:text-destructive disabled:opacity-20 transition-colors rounded"
+            aria-label="Delete row"
+            className="cursor-pointer p-1.5 text-muted-foreground/50 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-20 transition-colors rounded"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -342,17 +384,34 @@ export function TabularSeriesInput({
     return columnHelper.columns([categoryCol, ...seriesCols, actionsCol])
   }, [seriesStructureKey])
 
-  const table = useTable({
-    features: gridFeatures,
-    data: data.rows,
-    columns,
-    getRowId: (row) => row.id,
-  })
+  const table = useTable(
+    {
+      features: gridFeatures,
+      data: data.rows,
+      columns,
+      getRowId: (row) => row.id,
+      initialState: {
+        pagination: {
+          pageIndex: 0,
+          pageSize: 8,
+        },
+      },
+      autoResetPageIndex: false,
+    },
+    (state) => ({ pagination: state.pagination }),
+  )
+
+  const pagination = table.state.pagination
+  const totalRows = data.rows.length
+  const pageCount = Math.max(1, Math.ceil(totalRows / pagination.pageSize))
+  const safePageIndex = Math.min(pagination.pageIndex, pageCount - 1)
+  const startRow = totalRows === 0 ? 0 : safePageIndex * pagination.pageSize + 1
+  const endRow = Math.min(totalRows, (safePageIndex + 1) * pagination.pageSize)
 
   return (
-    <div className="space-y-4" data-testid="tabular-series-input">
+    <div className="space-y-3.5 sm:space-y-4 min-w-0" data-testid="tabular-series-input">
       {/* Primary Data Table */}
-      <ScrollArea className="w-full rounded-xl border border-border/70 bg-card">
+      <ScrollArea className="w-full max-w-full rounded-xl border border-border/70 bg-card">
         <table className="w-full border-collapse text-left">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -363,7 +422,7 @@ export function TabularSeriesInput({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-3 py-2.5 align-middle font-medium"
+                    className="px-2.5 sm:px-3 py-2.5 align-middle font-medium"
                   >
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
@@ -380,7 +439,7 @@ export function TabularSeriesInput({
                 className="hover:bg-muted/20 transition-colors"
               >
                 {row.getAllCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 align-middle">
+                  <td key={cell.id} className="px-2.5 sm:px-3 py-2 align-middle">
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}
@@ -390,6 +449,102 @@ export function TabularSeriesInput({
         </table>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+
+      {/* Compact Pagination Footer */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 px-2.5 sm:px-3 py-1.5 text-xs text-muted-foreground"
+        data-testid="tabular-pagination-bar"
+      >
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums">
+            <span className="hidden sm:inline">Showing </span>
+            <strong className="font-medium text-foreground">
+              {startRow}–{endRow}
+            </strong>{' '}
+            of{' '}
+            <strong className="font-medium text-foreground">{totalRows}</strong>
+          </span>
+
+          <Select
+            value={String(pagination.pageSize)}
+            onValueChange={(val) => {
+              const nextSize = Number(val) || 8
+              table.setPagination({
+                pageIndex: 0,
+                pageSize: nextSize,
+              })
+            }}
+          >
+            <SelectTrigger
+              size="sm"
+              aria-label="Rows per page"
+              className="h-7 gap-1 px-2 text-xs"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              <SelectItem value="5">5 / page</SelectItem>
+              <SelectItem value="8">8 / page</SelectItem>
+              <SelectItem value="15">15 / page</SelectItem>
+              <SelectItem value="30">30 / page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex <= 0}
+            onClick={() => table.firstPage()}
+            title="First page"
+            aria-label="First page"
+          >
+            <ChevronsLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex <= 0}
+            onClick={() => table.previousPage()}
+            title="Previous page"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="px-1.5 sm:px-2 tabular-nums font-medium text-foreground">
+            <span className="hidden sm:inline">Page </span>
+            {safePageIndex + 1}
+            <span className="hidden sm:inline"> of </span>
+            <span className="sm:hidden"> / </span>
+            {pageCount}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex >= pageCount - 1}
+            onClick={() => table.nextPage()}
+            title="Next page"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={safePageIndex >= pageCount - 1}
+            onClick={() => table.lastPage()}
+            title="Last page"
+            aria-label="Last page"
+          >
+            <ChevronsRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
 
       {/* Quiet Compact Table Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">

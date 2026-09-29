@@ -6,6 +6,7 @@ import {
   TabularSeriesDataSchema,
 } from './types'
 import type {
+  AnyChartData,
   ChartSpecificOptions,
   ChartTypeDefinition,
   ChartTypeId,
@@ -13,7 +14,19 @@ import type {
   HierarchicalTreeData,
   ProportionalSlicesData,
   TabularSeriesData,
+  TimeRangePreset,
 } from './types'
+
+export function formatLocalIsoDate(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function getTodayIsoDate(): string {
+  return formatLocalIsoDate(new Date())
+}
 
 export const DEFAULT_OPTIONS: ChartSpecificOptions = {
   barLayout: 'grouped',
@@ -32,6 +45,7 @@ export const DEFAULT_OPTIONS: ChartSpecificOptions = {
 }
 
 export function createDefaultTabularData(): TabularSeriesData {
+  const today = getTodayIsoDate()
   return {
     schemaKind: 'tabular-series',
     categoryLabel: '',
@@ -44,21 +58,25 @@ export function createDefaultTabularData(): TabularSeriesData {
       {
         id: 'row-1',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0, 'series-3': 0 },
       },
       {
         id: 'row-2',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0, 'series-3': 0 },
       },
       {
         id: 'row-3',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0, 'series-3': 0 },
       },
       {
         id: 'row-4',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0, 'series-3': 0 },
       },
     ],
@@ -66,6 +84,7 @@ export function createDefaultTabularData(): TabularSeriesData {
 }
 
 export function createDefaultRadarData(): TabularSeriesData {
+  const today = getTodayIsoDate()
   return {
     schemaKind: 'tabular-series',
     categoryLabel: '',
@@ -77,26 +96,31 @@ export function createDefaultRadarData(): TabularSeriesData {
       {
         id: 'row-1',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0 },
       },
       {
         id: 'row-2',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0 },
       },
       {
         id: 'row-3',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0 },
       },
       {
         id: 'row-4',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0 },
       },
       {
         id: 'row-5',
         category: '',
+        date: today,
         values: { 'series-1': 0, 'series-2': 0 },
       },
     ],
@@ -104,6 +128,7 @@ export function createDefaultRadarData(): TabularSeriesData {
 }
 
 export function createDefaultSlicesData(): ProportionalSlicesData {
+  const today = getTodayIsoDate()
   return {
     schemaKind: 'proportional-slices',
     unitLabel: '',
@@ -111,24 +136,28 @@ export function createDefaultSlicesData(): ProportionalSlicesData {
       {
         id: 'slice-1',
         label: '',
+        date: today,
         value: 0,
         note: '',
       },
       {
         id: 'slice-2',
         label: '',
+        date: today,
         value: 0,
         note: '',
       },
       {
         id: 'slice-3',
         label: '',
+        date: today,
         value: 0,
         note: '',
       },
       {
         id: 'slice-4',
         label: '',
+        date: today,
         value: 0,
         note: '',
       },
@@ -137,6 +166,7 @@ export function createDefaultSlicesData(): ProportionalSlicesData {
 }
 
 export function createDefaultCoordinateData(): CoordinatePointsData {
+  const today = getTodayIsoDate()
   return {
     schemaKind: 'coordinate-points',
     groups: [
@@ -147,6 +177,7 @@ export function createDefaultCoordinateData(): CoordinatePointsData {
       {
         id: 'pt-1',
         label: '',
+        date: today,
         groupId: 'grp-1',
         x: 0,
         y: 0,
@@ -155,6 +186,7 @@ export function createDefaultCoordinateData(): CoordinatePointsData {
       {
         id: 'pt-2',
         label: '',
+        date: today,
         groupId: 'grp-1',
         x: 0,
         y: 0,
@@ -163,6 +195,7 @@ export function createDefaultCoordinateData(): CoordinatePointsData {
       {
         id: 'pt-3',
         label: '',
+        date: today,
         groupId: 'grp-2',
         x: 0,
         y: 0,
@@ -171,6 +204,7 @@ export function createDefaultCoordinateData(): CoordinatePointsData {
       {
         id: 'pt-4',
         label: '',
+        date: today,
         groupId: 'grp-2',
         x: 0,
         y: 0,
@@ -181,6 +215,7 @@ export function createDefaultCoordinateData(): CoordinatePointsData {
 }
 
 export function createDefaultTreeData(): HierarchicalTreeData {
+  const today = getTodayIsoDate()
   return {
     schemaKind: 'hierarchical-tree',
     rootLabel: '',
@@ -189,16 +224,16 @@ export function createDefaultTreeData(): HierarchicalTreeData {
         id: 'branch-1',
         name: '',
         children: [
-          { id: 'leaf-1', name: '', value: 0 },
-          { id: 'leaf-2', name: '', value: 0 },
+          { id: 'leaf-1', name: '', date: today, value: 0 },
+          { id: 'leaf-2', name: '', date: today, value: 0 },
         ],
       },
       {
         id: 'branch-2',
         name: '',
         children: [
-          { id: 'leaf-3', name: '', value: 0 },
-          { id: 'leaf-4', name: '', value: 0 },
+          { id: 'leaf-3', name: '', date: today, value: 0 },
+          { id: 'leaf-4', name: '', date: today, value: 0 },
         ],
       },
     ],
@@ -217,10 +252,10 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: TabularSeriesDataSchema,
     defaultData: createDefaultTabularData,
     defaultConfig: () => ({
-      title: 'Regional Revenue Comparison ($M)',
-      subtitle: 'Quarterly revenue performance across primary operating regions',
-      xAxisLabel: 'Fiscal Quarter',
-      yAxisLabel: 'Revenue ($M)',
+      title: '',
+      subtitle: '',
+      xAxisLabel: '',
+      yAxisLabel: '',
       showLegend: true,
       legendPosition: 'top',
       showGrid: true,
@@ -332,10 +367,10 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: TabularSeriesDataSchema,
     defaultData: createDefaultTabularData,
     defaultConfig: () => ({
-      title: 'Quarterly Growth Trajectory ($M)',
-      subtitle: 'Multi-region trend progression across four fiscal quarters',
-      xAxisLabel: 'Fiscal Quarter',
-      yAxisLabel: 'Revenue ($M)',
+      title: '',
+      subtitle: '',
+      xAxisLabel: '',
+      yAxisLabel: '',
       showLegend: true,
       legendPosition: 'top',
       showGrid: true,
@@ -450,10 +485,10 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: TabularSeriesDataSchema,
     defaultData: createDefaultTabularData,
     defaultConfig: () => ({
-      title: 'Cumulative Regional Volume ($M)',
-      subtitle: 'Filled area magnitude across operating territories',
-      xAxisLabel: 'Fiscal Quarter',
-      yAxisLabel: 'Volume ($M)',
+      title: '',
+      subtitle: '',
+      xAxisLabel: '',
+      yAxisLabel: '',
       showLegend: true,
       legendPosition: 'top',
       showGrid: true,
@@ -520,8 +555,8 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: ProportionalSlicesDataSchema,
     defaultData: createDefaultSlicesData,
     defaultConfig: () => ({
-      title: 'Renewable Energy Generation Mix',
-      subtitle: 'Proportional share of clean power output by technology (GWh)',
+      title: '',
+      subtitle: '',
       xAxisLabel: '',
       yAxisLabel: '',
       showLegend: true,
@@ -627,10 +662,10 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: CoordinatePointsDataSchema,
     defaultData: createDefaultCoordinateData,
     defaultConfig: () => ({
-      title: 'Adoption Score vs. Retention Rate by Tier',
-      subtitle: 'Continuous (X, Y) coordinate clusters with bubble weight sizing',
-      xAxisLabel: 'Feature Adoption Index (0–100)',
-      yAxisLabel: 'Net Retention Rate (%)',
+      title: '',
+      subtitle: '',
+      xAxisLabel: '',
+      yAxisLabel: '',
       showLegend: true,
       legendPosition: 'top',
       showGrid: true,
@@ -684,8 +719,8 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: TabularSeriesDataSchema,
     defaultData: createDefaultRadarData,
     defaultConfig: () => ({
-      title: 'System Architecture Capability Profile',
-      subtitle: 'Multivariate benchmark score comparison (0–100 scale)',
+      title: '',
+      subtitle: '',
       xAxisLabel: '',
       yAxisLabel: '',
       showLegend: true,
@@ -745,8 +780,8 @@ export const CHART_REGISTRY: Record<ChartTypeId, ChartTypeDefinition<any>> = {
     dataSchema: HierarchicalTreeDataSchema,
     defaultData: createDefaultTreeData,
     defaultConfig: () => ({
-      title: 'R&D Investment Portfolio Hierarchy',
-      subtitle: 'Nested branch & leaf allocation across engineering divisions ($K)',
+      title: '',
+      subtitle: '',
       xAxisLabel: '',
       yAxisLabel: '',
       showLegend: true,
@@ -792,6 +827,53 @@ export function getChartDefinition(type: string): ChartTypeDefinition<any> {
   return CHART_REGISTRY.bar
 }
 
+const UNTITLED_COUNTER_STORAGE_KEY = 'plotthechart.untitled.counter.v1'
+
+export function getNextUntitledName(
+  existingNames: Array<string> = [],
+  advanceCounter = false,
+): string {
+  let maxNumber = 0
+
+  for (const name of existingNames) {
+    const match = /^Untitled-(\d+)$/i.exec(name.trim())
+    if (match) {
+      const n = Number(match[1])
+      if (Number.isFinite(n) && n > maxNumber) {
+        maxNumber = n
+      }
+    }
+  }
+
+  let storedCounter = 0
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(UNTITLED_COUNTER_STORAGE_KEY)
+      const parsed = raw ? Number(raw) : 0
+      if (Number.isFinite(parsed) && parsed > 0) {
+        storedCounter = parsed
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+  }
+
+  const nextNumber = Math.max(maxNumber + 1, storedCounter + 1, 1)
+
+  if (advanceCounter && typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(
+        UNTITLED_COUNTER_STORAGE_KEY,
+        String(nextNumber),
+      )
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
+
+  return `Untitled-${nextNumber}`
+}
+
 export function validateChartPayload(
   chartType: string,
   rawData: unknown,
@@ -809,3 +891,164 @@ export function validateChartPayload(
     isValid: parsedData.success && parsedConfig.success,
   }
 }
+
+export function resolveEntryDate(
+  entryDate?: string,
+  labelOrCategory?: string,
+): string {
+  const trimmedDate = entryDate?.trim()
+  if (trimmedDate && /^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
+    return trimmedDate
+  }
+
+  const trimmedLabel = labelOrCategory?.trim()
+  if (trimmedLabel && /\d{4}/.test(trimmedLabel)) {
+    const parsedLabel = new Date(trimmedLabel)
+    if (!Number.isNaN(parsedLabel.getTime())) {
+      return formatLocalIsoDate(parsedLabel)
+    }
+  }
+
+  if (trimmedDate) {
+    const parsedDate = new Date(trimmedDate)
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return formatLocalIsoDate(parsedDate)
+    }
+  }
+
+  return getTodayIsoDate()
+}
+
+export function getTimeRangeBounds(
+  preset: TimeRangePreset,
+  customFrom?: string,
+  customTo?: string,
+): { from: string; to: string } | null {
+  if (preset === 'all') return null
+
+  const now = new Date()
+  const todayStr = formatLocalIsoDate(now)
+
+  if (preset === 'today') {
+    return { from: todayStr, to: todayStr }
+  }
+
+  if (preset === '7d') {
+    const start = new Date(now)
+    start.setDate(start.getDate() - 6)
+    return { from: formatLocalIsoDate(start), to: todayStr }
+  }
+
+  if (preset === '1m') {
+    const start = new Date(now)
+    start.setMonth(start.getMonth() - 1)
+    return { from: formatLocalIsoDate(start), to: todayStr }
+  }
+
+  if (preset === '6m') {
+    const start = new Date(now)
+    start.setMonth(start.getMonth() - 6)
+    return { from: formatLocalIsoDate(start), to: todayStr }
+  }
+
+  if (preset === '1y') {
+    const start = new Date(now)
+    start.setFullYear(start.getFullYear() - 1)
+    return { from: formatLocalIsoDate(start), to: todayStr }
+  }
+
+  // preset === 'custom'
+  const rawFrom = customFrom?.trim() || '0000-01-01'
+  const rawTo = customTo?.trim() || '9999-12-31'
+  const from = rawFrom <= rawTo ? rawFrom : rawTo
+  const to = rawFrom <= rawTo ? rawTo : rawFrom
+  return { from, to }
+}
+
+export function filterChartDataByTimeRange(
+  data: AnyChartData,
+  preset: TimeRangePreset,
+  customFrom?: string,
+  customTo?: string,
+): {
+  filteredData: AnyChartData
+  matchedCount: number
+  totalCount: number
+} {
+  const bounds = getTimeRangeBounds(preset, customFrom, customTo)
+
+  if (data.schemaKind === 'tabular-series') {
+    const totalCount = data.rows.length
+    if (!bounds) {
+      return { filteredData: data, matchedCount: totalCount, totalCount }
+    }
+    const matchedRows = data.rows.filter((r) => {
+      const d = resolveEntryDate(r.date, r.category)
+      return d >= bounds.from && d <= bounds.to
+    })
+    return {
+      filteredData: { ...data, rows: matchedRows },
+      matchedCount: matchedRows.length,
+      totalCount,
+    }
+  }
+
+  if (data.schemaKind === 'proportional-slices') {
+    const totalCount = data.slices.length
+    if (!bounds) {
+      return { filteredData: data, matchedCount: totalCount, totalCount }
+    }
+    const matchedSlices = data.slices.filter((s) => {
+      const d = resolveEntryDate(s.date, s.label)
+      return d >= bounds.from && d <= bounds.to
+    })
+    return {
+      filteredData: { ...data, slices: matchedSlices },
+      matchedCount: matchedSlices.length,
+      totalCount,
+    }
+  }
+
+  if (data.schemaKind === 'coordinate-points') {
+    const totalCount = data.points.length
+    if (!bounds) {
+      return { filteredData: data, matchedCount: totalCount, totalCount }
+    }
+    const matchedPoints = data.points.filter((pt) => {
+      const d = resolveEntryDate(pt.date, pt.label)
+      return d >= bounds.from && d <= bounds.to
+    })
+    return {
+      filteredData: { ...data, points: matchedPoints },
+      matchedCount: matchedPoints.length,
+      totalCount,
+    }
+  }
+
+  // hierarchical-tree
+  const totalCount = data.branches.reduce(
+    (sum, b) => sum + b.children.length,
+    0,
+  )
+  if (!bounds) {
+    return { filteredData: data, matchedCount: totalCount, totalCount }
+  }
+  let matchedCount = 0
+  const matchedBranches = data.branches
+    .map((b) => {
+      const children = b.children.filter((leaf) => {
+        const d = resolveEntryDate(leaf.date, leaf.name)
+        return d >= bounds.from && d <= bounds.to
+      })
+      matchedCount += children.length
+      return { ...b, children }
+    })
+    .filter((b) => b.children.length > 0)
+
+  return {
+    filteredData: { ...data, branches: matchedBranches },
+    matchedCount,
+    totalCount,
+  }
+}
+

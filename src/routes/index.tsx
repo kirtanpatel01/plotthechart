@@ -80,10 +80,10 @@ const EXISTING_FEATURES = [
 
 function LandingPage() {
   return (
-    <div className="flex flex-1 flex-col w-full">
+    <div className="flex flex-1 flex-col w-full min-w-0">
       {/* Standalone Top Bar */}
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
+      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
           <Link
             to="/"
             search={{}}
@@ -108,13 +108,13 @@ function LandingPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex flex-1 w-full max-w-5xl flex-col justify-center px-4 py-12 space-y-14">
+      <main className="mx-auto flex flex-1 w-full max-w-5xl flex-col justify-center px-4 py-8 sm:py-12 space-y-10 sm:space-y-14">
         {/* Minimal Hero */}
-        <section className="max-w-2xl space-y-4">
+        <section className="max-w-2xl space-y-3.5 sm:space-y-4">
           <span className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
             Data Visualization Studio
           </span>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">
             Enter data, configure styling, and export SVG charts.
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -122,8 +122,8 @@ function LandingPage() {
             Scatter/Bubble, Radar, and Treemap visualizations with schema-specific
             data tables, live SVG rendering, and project persistence.
           </p>
-          <div className="pt-2">
-            <Button asChild>
+          <div className="pt-1 sm:pt-2">
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/studio" search={{}} className="no-underline">
                 Open Studio
                 <ArrowRight className="h-4 w-4" />
@@ -134,12 +134,12 @@ function LandingPage() {
 
       {/* 7 Supported Chart Types */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-1">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             7 Chart Types
           </h2>
           <span className="text-xs text-muted-foreground">
-            Click any chart to open in Studio
+            Tap any chart to open in Studio
           </span>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

@@ -42,7 +42,7 @@ export function SaveProjectModal({
 
   useEffect(() => {
     if (open) {
-      setProjectName(initialName || 'Untitled Chart Project')
+      setProjectName(initialName || 'Untitled-1')
       setProjectDescription(initialDescription || '')
       setSaveError('')
       setAuthError('')
@@ -77,6 +77,11 @@ export function SaveProjectModal({
           return
         }
       }
+      await onSaveConfirmed({
+        name: (initialName || 'Untitled-1').trim(),
+        description: (initialDescription || '').trim(),
+      })
+      onClose()
     } catch (err: any) {
       setAuthError(err?.message || 'Authentication failed. Please try again.')
     } finally {
@@ -119,7 +124,7 @@ export function SaveProjectModal({
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute right-3.5 top-3.5 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="cursor-pointer absolute right-3.5 top-3.5 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -216,7 +221,7 @@ export function SaveProjectModal({
                   setIsSignUp((v) => !v)
                   setAuthError('')
                 }}
-                className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+                className="cursor-pointer font-medium text-foreground underline underline-offset-4 hover:opacity-80"
                 data-testid="modal-auth-toggle-mode"
               >
                 {isSignUp ? 'Sign in' : 'Sign up'}
