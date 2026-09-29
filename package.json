@@ -69,7 +69,8 @@
       "esbuild",
       "lightningcss",
       "@prisma/engines",
-      "prisma"
+      "prisma",
+      "workerd"
     ]
   },
   "intent": {

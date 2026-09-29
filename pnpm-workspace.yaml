@@ -3,3 +3,4 @@ allowBuilds:
   lightningcss: true
   '@prisma/engines': true
   prisma: true
+  workerd: true
