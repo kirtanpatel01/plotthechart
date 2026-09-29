@@ -8,6 +8,14 @@ const PBKDF2_ITERATIONS = 100_000
 const SALT_BYTES = 16
 const KEY_BITS = 256
 
+let lastAuthInternalError: string | null = null
+
+export function consumeLastAuthInternalError(): string | null {
+  const err = lastAuthInternalError
+  lastAuthInternalError = null
+  return err
+}
+
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -88,8 +96,10 @@ async function verifyPasswordWebCrypto({
 }
 
 function getEffectiveBaseURL(): string | undefined {
-  const url = process.env.BETTER_AUTH_URL
-  if (!url) return undefined
+  const url = process.env.BETTER_AUTH_URL?.trim()
+  if (!url || url.includes('localhost') || url.includes('127.0.0.1')) {
+    return undefined
+  }
   return url
 }
 
@@ -109,6 +119,21 @@ function createAuth() {
       } catch {
         return []
       }
+    },
+    onAPIError: {
+      onError(error) {
+        console.error('[Better Auth API Error]:', error)
+        if (error instanceof Error) {
+          lastAuthInternalError = error.message
+        } else if (
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof (error as { message: unknown }).message === 'string'
+        ) {
+          lastAuthInternalError = (error as { message: string }).message
+        }
+      },
     },
     emailAndPassword: {
       enabled: true,

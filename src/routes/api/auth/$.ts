@@ -1,9 +1,26 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { auth } from '#/lib/auth'
+import { auth, consumeLastAuthInternalError } from '#/lib/auth'
 
 async function handleAuthRequest(request: Request): Promise<Response> {
   try {
-    return await auth.handler(request)
+    consumeLastAuthInternalError()
+    const response = await auth.handler(request)
+    if (response.status >= 500) {
+      const internalMsg = consumeLastAuthInternalError()
+      if (internalMsg) {
+        return new Response(
+          JSON.stringify({
+            message: internalMsg,
+            code: 'INTERNAL_AUTH_ERROR',
+          }),
+          {
+            status: response.status,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+    }
+    return response
   } catch (error) {
     console.error('[Better Auth Handler Error]:', error)
     const message =
