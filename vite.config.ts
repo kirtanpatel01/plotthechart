@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { cloudflare } from '@cloudflare/vite-plugin'
@@ -21,10 +22,28 @@ const config = defineConfig(({ command }) => ({
     {
       name: 'wasm-module-dev-loader',
       apply: 'serve',
+      enforce: 'pre',
+      resolveId(source, importer) {
+        if (source.endsWith('.wasm?module') && importer) {
+          const cleanImporter = importer.split('?')[0]
+          const resolved = path.resolve(
+            path.dirname(cleanImporter),
+            source.slice(0, -'?module'.length),
+          )
+          return `\0wasm-module:${resolved}`
+        }
+        return null
+      },
       load(id) {
-        if (!id.endsWith('.wasm?module')) return null
-        const filePath = id.slice(0, -'?module'.length)
-        return `import { readFileSync } from 'node:fs';\nexport default new WebAssembly.Module(readFileSync(${JSON.stringify(filePath)}));`
+        if (id.startsWith('\0wasm-module:')) {
+          const filePath = id.slice('\0wasm-module:'.length)
+          return `import { readFileSync } from 'node:fs';\nexport default new WebAssembly.Module(readFileSync(${JSON.stringify(filePath)}));`
+        }
+        if (id.endsWith('.wasm?module')) {
+          const filePath = id.slice(0, -'?module'.length)
+          return `import { readFileSync } from 'node:fs';\nexport default new WebAssembly.Module(readFileSync(${JSON.stringify(filePath)}));`
+        }
+        return null
       },
     },
     ...(command === 'build'

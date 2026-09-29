@@ -117,23 +117,27 @@ export const getChartProjectByIdFn = createServerFn({
 })
   .validator((input: { id: string }) => input)
   .handler(async ({ data }): Promise<SerializedChartProject | null> => {
-    const request = getRequest()
-    if (!request) return null
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    })
-    if (!session?.user) return null
-    setResponseHeader('Cache-Control', 'private, no-store')
-    setResponseHeader('Vary', 'Cookie, Authorization')
+    try {
+      const request = getRequest()
+      if (!request) return null
+      const session = await auth.api.getSession({
+        headers: request.headers,
+      })
+      if (!session?.user) return null
+      setResponseHeader('Cache-Control', 'private, no-store')
+      setResponseHeader('Vary', 'Cookie, Authorization')
 
-    const record = await prisma.chartProject.findFirst({
-      where: {
-        id: data.id,
-        userId: session.user.id,
-      },
-    })
-    if (!record) return null
-    return serializeProject(record)
+      const record = await prisma.chartProject.findFirst({
+        where: {
+          id: data.id,
+          userId: session.user.id,
+        },
+      })
+      if (!record) return null
+      return serializeProject(record)
+    } catch {
+      return null
+    }
   })
 
 const SaveProjectInputSchema = z.object({
