@@ -17,7 +17,7 @@ function createPrismaClient(connectionString: string): PrismaClient {
     connectionString.includes('neon.database')
 
   if (isNeon) {
-    const adapter = new PrismaNeon({ connectionString })
+    const adapter = new PrismaNeon({ connectionString, maxUses: 1 })
     return new PrismaClient({ adapter })
   }
 
