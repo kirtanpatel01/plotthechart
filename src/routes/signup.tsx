@@ -6,20 +6,21 @@ import { Label } from '#/components/ui/label'
 import { authClient } from '#/lib/auth-client'
 import { getServerSessionFn } from '#/lib/charts/projects.functions'
 
-export const Route = createFileRoute('/signin')({
+export const Route = createFileRoute('/signup')({
   beforeLoad: async () => {
     const session = await getServerSessionFn()
     if (session?.user) {
       throw redirect({ to: '/dashboard' })
     }
   },
-  component: SignInPage,
+  component: SignUpPage,
 })
 
-function SignInPage() {
+function SignUpPage() {
   const router = useRouter()
   const navigate = useNavigate()
   const { data: session, isPending } = authClient.useSession()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -45,12 +46,13 @@ function SignInPage() {
     setLoading(true)
 
     try {
-      const result = await authClient.signIn.email({
+      const result = await authClient.signUp.email({
+        name: name.trim(),
         email: email.trim(),
         password,
       })
       if (result.error) {
-        setError(result.error.message || 'Sign in failed')
+        setError(result.error.message || 'Sign up failed')
         return
       }
       await router.invalidate()
@@ -66,13 +68,30 @@ function SignInPage() {
     <main className="flex flex-1 w-full items-center justify-center p-4">
       <section className="w-full max-w-sm rounded-xl border border-border/70 bg-card p-6 shadow-xs space-y-5">
         <div className="space-y-1 text-center">
-          <h1 className="text-lg font-semibold tracking-tight">Sign in</h1>
+          <h1 className="text-lg font-semibold tracking-tight">
+            Create an account
+          </h1>
           <p className="text-xs text-muted-foreground">
-            Enter your email and password to continue
+            Enter your details below to get started
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-xs">
+              Name
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              className="h-9"
+              required
+            />
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-xs">
               Email
@@ -111,17 +130,17 @@ function SignInPage() {
           )}
 
           <Button type="submit" disabled={loading} className="w-full h-9">
-            {loading ? 'Please wait...' : 'Sign in'}
+            {loading ? 'Please wait...' : 'Sign up'}
           </Button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          Don&apos;t have an account?{' '}
+          Already have an account?{' '}
           <Link
-            to="/signup"
+            to="/signin"
             className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
           >
-            Sign up
+            Sign in
           </Link>
         </p>
       </section>

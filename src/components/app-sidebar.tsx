@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   FolderKanban,
   Layers,
@@ -7,6 +7,7 @@ import {
   LogOut,
   Sparkles,
   User,
+  UserPlus,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -23,10 +24,20 @@ import {
 import { authClient } from '#/lib/auth-client'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter()
+  const navigate = useNavigate()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
   const { data: session, isPending } = authClient.useSession()
+
+  const handleSignOut = async () => {
+    await authClient.signOut()
+    await router.invalidate()
+    if (pathname.startsWith('/dashboard')) {
+      await navigate({ to: '/signin', replace: true })
+    }
+  }
 
   return (
     <Sidebar
@@ -73,19 +84,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith('/dashboard')}
-                  tooltip="Saved Projects"
-                  className="font-medium"
-                >
-                  <Link to="/dashboard" className="no-underline">
-                    <FolderKanban />
-                    <span>Saved Projects</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {session?.user && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith('/dashboard')}
+                    tooltip="Saved Projects"
+                    className="font-medium"
+                  >
+                    <Link to="/dashboard" className="no-underline">
+                      <FolderKanban />
+                      <span>Saved Projects</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -129,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => {
-                    void authClient.signOut()
+                    void handleSignOut()
                   }}
                   tooltip="Sign out"
                   className="text-muted-foreground hover:text-foreground"
@@ -141,20 +154,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
             </>
           ) : (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith('/signin')}
-                tooltip="Sign in"
-                className="text-muted-foreground hover:text-foreground"
-                data-testid="header-signin-link"
-              >
-                <Link to="/signin" className="no-underline">
-                  <LogIn />
-                  <span>Sign in</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/signin')}
+                  tooltip="Sign in"
+                  className="text-muted-foreground hover:text-foreground"
+                  data-testid="header-signin-link"
+                >
+                  <Link to="/signin" className="no-underline">
+                    <LogIn />
+                    <span>Sign in</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/signup')}
+                  tooltip="Sign up"
+                  className="text-muted-foreground hover:text-foreground"
+                  data-testid="header-signup-link"
+                >
+                  <Link to="/signup" className="no-underline">
+                    <UserPlus />
+                    <span>Sign up</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
           )}
         </SidebarMenu>
       </SidebarFooter>

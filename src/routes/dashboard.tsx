@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -22,7 +22,6 @@ import {
 import { ChartCanvas } from '#/components/charts/ChartCanvas'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { Label } from '#/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -38,7 +37,6 @@ import {
   listMyChartProjectsFn,
 } from '#/lib/charts/projects.functions'
 import { CHART_TYPES_LIST, getChartDefinition } from '#/lib/charts/registry'
-import type { SerializedChartProject } from '#/lib/charts/projects.functions'
 import type { ChartTypeId } from '#/lib/charts/types'
 
 const CHART_ICONS: Record<
@@ -57,17 +55,16 @@ const CHART_ICONS: Record<
 type SortOption = 'updated-desc' | 'created-desc' | 'name-asc'
 
 export const Route = createFileRoute('/dashboard')({
-  loader: async () => {
+  beforeLoad: async () => {
     const session = await getServerSessionFn()
     if (!session?.user) {
-      return {
-        initialUser: null,
-        initialProjects: [] as Array<SerializedChartProject>,
-      }
+      throw redirect({ to: '/signin' })
     }
+    return { user: session.user }
+  },
+  loader: async () => {
     const projects = await listMyChartProjectsFn()
     return {
-      initialUser: session.user,
       initialProjects: projects,
     }
   },
@@ -75,12 +72,21 @@ export const Route = createFileRoute('/dashboard')({
 })
 
 function DashboardPage() {
-  const { initialUser, initialProjects } = Route.useLoaderData()
+  const { user: initialUser } = Route.useRouteContext()
+  const { initialProjects } = Route.useLoaderData()
   const router = useRouter()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { data: clientSession } = authClient.useSession()
+  const { data: clientSession, isPending: sessionPending } =
+    authClient.useSession()
 
   const activeUser = clientSession?.user ?? initialUser
+
+  useEffect(() => {
+    if (!sessionPending && clientSession === null) {
+      void navigate({ to: '/signin', replace: true })
+    }
+  }, [sessionPending, clientSession, navigate])
 
   const listFn = useServerFn(listMyChartProjectsFn)
   const deleteFn = useServerFn(deleteChartProjectFn)
@@ -90,19 +96,10 @@ function DashboardPage() {
   const [filterType, setFilterType] = useState<string>('all')
   const [sortBy, setSortBy] = useState<SortOption>('updated-desc')
 
-  // Inline auth state when unauthenticated
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [authError, setAuthError] = useState('')
-  const [authSubmitting, setAuthSubmitting] = useState(false)
-
   const projectsQuery = useQuery({
-    queryKey: ['chart-projects', activeUser?.id],
+    queryKey: ['chart-projects', activeUser.id],
     queryFn: () => listFn(),
     initialData: initialProjects,
-    enabled: Boolean(activeUser),
   })
 
   const deleteMutation = useMutation({
@@ -120,40 +117,6 @@ function DashboardPage() {
       await router.invalidate()
     },
   })
-
-  const handleInlineAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAuthError('')
-    setAuthSubmitting(true)
-    try {
-      if (isSignUp) {
-        const res = await authClient.signUp.email({
-          name: name.trim() || email.split('@')[0] || 'User',
-          email: email.trim(),
-          password,
-        })
-        if (res.error) {
-          setAuthError(res.error.message || 'Sign up failed')
-          return
-        }
-      } else {
-        const res = await authClient.signIn.email({
-          email: email.trim(),
-          password,
-        })
-        if (res.error) {
-          setAuthError(res.error.message || 'Sign in failed')
-          return
-        }
-      }
-      await router.invalidate()
-      await queryClient.invalidateQueries({ queryKey: ['chart-projects'] })
-    } catch (err: any) {
-      setAuthError(err?.message || 'Authentication error')
-    } finally {
-      setAuthSubmitting(false)
-    }
-  }
 
   const projects = projectsQuery.data ?? []
 
@@ -183,110 +146,6 @@ function DashboardPage() {
       )
     })
   }, [projects, filterType, searchQuery, sortBy])
-
-  if (!activeUser) {
-    return (
-      <main className="flex flex-1 w-full items-center justify-center p-4">
-        <section
-          className="w-full max-w-sm rounded-xl border border-border/70 bg-card p-6 shadow-xs space-y-5"
-          data-testid="dashboard-auth-gate"
-        >
-          <div className="space-y-1 text-center">
-            <h1 className="text-lg font-semibold tracking-tight">
-              {isSignUp ? 'Create an account' : 'Sign in'}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {isSignUp
-                ? 'Enter your details below to get started'
-                : 'Enter your email and password to continue'}
-            </p>
-          </div>
-
-          <form onSubmit={handleInlineAuth} className="space-y-3.5">
-            {isSignUp && (
-              <div className="space-y-1.5">
-                <Label htmlFor="dash-auth-name" className="text-xs">
-                  Name
-                </Label>
-                <Input
-                  id="dash-auth-name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className="h-9"
-                />
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="dash-auth-email" className="text-xs">
-                Email
-              </Label>
-              <Input
-                id="dash-auth-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="h-9"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="dash-auth-password" className="text-xs">
-                Password
-              </Label>
-              <Input
-                id="dash-auth-password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-9"
-              />
-            </div>
-
-            {authError && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {authError}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              disabled={authSubmitting}
-              className="w-full h-9"
-              data-testid="dashboard-auth-submit"
-            >
-              {authSubmitting
-                ? 'Please wait...'
-                : isSignUp
-                  ? 'Sign up'
-                  : 'Sign in'}
-            </Button>
-          </form>
-
-          <p className="text-center text-xs text-muted-foreground">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp((v) => !v)
-                setAuthError('')
-              }}
-              className="cursor-pointer font-medium text-foreground underline underline-offset-4 hover:opacity-80"
-            >
-              {isSignUp ? 'Sign in' : 'Sign up'}
-            </button>
-          </p>
-        </section>
-      </main>
-    )
-  }
 
   return (
     <main
@@ -563,4 +422,3 @@ function DashboardPage() {
     </main>
   )
 }
-
