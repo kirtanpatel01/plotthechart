@@ -19,7 +19,42 @@ const config = defineConfig(({ command }) => ({
       },
     }),
     ...(command === 'build'
-      ? [cloudflare({ viteEnvironment: { name: 'ssr' } })]
+      ? [
+          cloudflare({
+            viteEnvironment: { name: 'ssr' },
+            config: (workerConfig) => {
+              const buildVars: Record<string, string> = {}
+              const dbUrl = process.env.DATABASE_URL
+              const isRemoteDb =
+                dbUrl &&
+                !dbUrl.includes('localhost') &&
+                !dbUrl.includes('127.0.0.1')
+
+              if (isRemoteDb) {
+                buildVars.DATABASE_URL = dbUrl
+                if (process.env.BETTER_AUTH_SECRET) {
+                  buildVars.BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET
+                }
+              }
+              if (
+                process.env.BETTER_AUTH_URL &&
+                !process.env.BETTER_AUTH_URL.includes('localhost') &&
+                !process.env.BETTER_AUTH_URL.includes('127.0.0.1')
+              ) {
+                buildVars.BETTER_AUTH_URL = process.env.BETTER_AUTH_URL
+              }
+
+              if (Object.keys(buildVars).length > 0) {
+                return {
+                  vars: {
+                    ...workerConfig.vars,
+                    ...buildVars,
+                  },
+                }
+              }
+            },
+          }),
+        ]
       : []),
     tailwindcss(),
     tanstackStart(),
