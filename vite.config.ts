@@ -18,6 +18,15 @@ const config = defineConfig(({ command }) => ({
         enabled: false,
       },
     }),
+    {
+      name: 'wasm-module-dev-loader',
+      apply: 'serve',
+      load(id) {
+        if (!id.endsWith('.wasm?module')) return null
+        const filePath = id.slice(0, -'?module'.length)
+        return `import { readFileSync } from 'node:fs';\nexport default new WebAssembly.Module(readFileSync(${JSON.stringify(filePath)}));`
+      },
+    },
     ...(command === 'build'
       ? [
           cloudflare({
