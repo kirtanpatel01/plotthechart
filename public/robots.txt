@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# Allow AI Search and Citation Bots (AI SEO Optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Block generic scraping/training-only bots if desired (Optional)
+User-agent: CCBot
+Disallow: /
+
+Sitemap: https://plotthechart.com/sitemap.xml

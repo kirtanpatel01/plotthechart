@@ -1,0 +1,24 @@
+# PlotTheChart - AI Context
+
+> PlotTheChart is a TanStack Start Data Visualization Studio that allows users to instantly generate, configure, and save beautiful charts without writing code.
+
+## Core Value Proposition
+PlotTheChart provides a general-purpose, domain-neutral workflow: Enter Data → Visualize → Configure → Save. 
+It supports dynamic inputs for tabular series (Bar, Line, Area, Radar), proportional slices (Pie, Donut), coordinate points (Scatter, Bubble), and hierarchical trees (Treemaps).
+
+## Architecture & Tech Stack
+- Framework: TanStack Start, TanStack Router, React 19
+- UI/Styling: Tailwind CSS v4, shadcn/ui
+- Data Visualization: TanStack Table v9, Recharts/D3 (abstracted via ChartCanvas)
+- Database: Prisma ORM (PostgreSQL)
+- Auth: Better Auth
+
+## Key Features
+- **Anonymous Chart Generation**: Users can try the studio and generate charts without an account.
+- **Polymorphic Data Model**: Automatically adapts to different chart schemas without forcing everything into a rigid row/column table.
+- **Extensibility**: Open-closed chart registry allows for adding new chart types with zero database migrations.
+
+## Relevant Links
+- Studio: https://plotthechart.com/studio
+- Dashboard: https://plotthechart.com/dashboard
+- Pricing: https://plotthechart.com/pricing.md

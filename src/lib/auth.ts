@@ -1,8 +1,13 @@
+import disposableDomains from 'disposable-email-domains'
 import { betterAuth } from 'better-auth'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { verifyPassword as verifyScryptPassword } from 'better-auth/crypto'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { prisma } from '#/db'
+import { sendEmail } from './email'
+
+const disposableSet = new Set(disposableDomains)
 
 const PBKDF2_ITERATIONS = 100_000
 const SALT_BYTES = 16
@@ -103,22 +108,78 @@ function getEffectiveBaseURL(): string | undefined {
   return url
 }
 
+function getEffectiveSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'BETTER_AUTH_SECRET environment variable is required in production.',
+      )
+    }
+    return 'plotthechart-super-secret-key-2026-tanstack-start'
+  }
+  return secret
+}
+
 function createAuth() {
   return betterAuth({
     database: prismaAdapter(prisma, {
       provider: 'postgresql',
     }),
-    secret:
-      process.env.BETTER_AUTH_SECRET ||
-      'plotthechart-super-secret-key-2026-tanstack-start',
+    secret: getEffectiveSecret(),
     baseURL: getEffectiveBaseURL(),
     trustedOrigins: (request) => {
+      const allowed = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || []
+      if (allowed.length > 0) return allowed
       if (!request) return []
       try {
         return [new URL(request.url).origin]
       } catch {
         return []
       }
+    },
+    rateLimit: {
+      enabled: true,
+      window: 60, // 1 minute
+      max: 100, // max 100 requests per IP per window
+    },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === '/sign-up/email') {
+          const email = (ctx.body as any)?.email
+          const password = (ctx.body as any)?.password
+          
+          if (typeof password === 'string') {
+            if (password.length < 8) {
+              throw new APIError('BAD_REQUEST', { message: 'Password must be at least 8 characters long.' })
+            }
+            if (!/[a-z]/.test(password)) {
+              throw new APIError('BAD_REQUEST', { message: 'Password must contain at least one lowercase letter.' })
+            }
+            if (!/[A-Z]/.test(password)) {
+              throw new APIError('BAD_REQUEST', { message: 'Password must contain at least one uppercase letter.' })
+            }
+            if (!/[0-9]/.test(password)) {
+              throw new APIError('BAD_REQUEST', { message: 'Password must contain at least one number.' })
+            }
+            const commonPasswords = ['12345678', 'password', 'password123', '123456789', 'qwertyuiop']
+            if (commonPasswords.includes(password.toLowerCase())) {
+              throw new APIError('BAD_REQUEST', { message: 'This password is too common or easily guessable.' })
+            }
+          }
+
+          if (typeof email === 'string') {
+            const domain = email.split('@')[1]?.toLowerCase()
+            if (domain) {
+              if (disposableSet.has(domain)) {
+                throw new APIError('BAD_REQUEST', {
+                  message: 'Disposable email addresses are not allowed. Please use a valid email.',
+                })
+              }
+            }
+          }
+        }
+      }),
     },
     onAPIError: {
       onError(error) {
@@ -137,11 +198,29 @@ function createAuth() {
     },
     emailAndPassword: {
       enabled: true,
-      minPasswordLength: 6,
+      minPasswordLength: 8,
       password: {
         hash: hashPasswordWebCrypto,
         verify: verifyPasswordWebCrypto,
       },
+      sendResetPassword: async ({ user, url }) => {
+        sendEmail({
+          to: user.email,
+          subject: 'Reset your password - PlotTheChart',
+          html: `<p>Hi ${user.name},</p><p>You recently requested to reset your password.</p><p><a href="${url}">Click here to reset your password</a></p><p>If you did not request this, please ignore this email.</p>`,
+        }).catch(console.error)
+      }
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        sendEmail({
+          to: user.email,
+          subject: 'Verify your email - PlotTheChart',
+          html: `<p>Hi ${user.name},</p><p>Welcome to PlotTheChart! Please verify your email address by clicking the link below:</p><p><a href="${url}">Verify my email</a></p>`,
+        }).catch(console.error)
+      }
     },
     plugins: [tanstackStartCookies()],
   })

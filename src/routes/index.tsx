@@ -81,6 +81,24 @@ const EXISTING_FEATURES = [
 function LandingPage() {
   return (
     <div className="flex flex-1 flex-col w-full min-w-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'PlotTheChart',
+            applicationCategory: 'DesignApplication',
+            operatingSystem: 'Any',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+            description: 'A data visualization studio for generating, configuring, and exporting charts instantly.',
+          }),
+        }}
+      />
       {/* Standalone Top Bar */}
       <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
@@ -115,12 +133,10 @@ function LandingPage() {
             Data Visualization Studio
           </span>
           <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">
-            Enter data, configure styling, and export SVG charts.
+            Free Data Visualization Studio & SVG Chart Maker
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            PlotTheChart is a workspace for building Bar, Line, Area, Pie/Donut,
-            Scatter/Bubble, Radar, and Treemap visualizations with schema-specific
-            data tables, live SVG rendering, and project persistence.
+            PlotTheChart is a powerful workspace for building beautiful Bar, Line, Area, Pie, Donut, Scatter, Radar, and Treemap charts. Enter your data, configure styling, and instantly export responsive vector graphics—no coding required.
           </p>
           <div className="pt-1 sm:pt-2">
             <Button asChild className="w-full sm:w-auto">

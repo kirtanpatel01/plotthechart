@@ -1,10 +1,22 @@
 import { Link, createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { authClient } from '#/lib/auth-client'
 import { getServerSessionFn } from '#/lib/charts/projects.functions'
+
+const SignUpSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters'),
+  email: z.string().trim().email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+})
 
 export const Route = createFileRoute('/signup')({
   beforeLoad: async () => {
@@ -46,10 +58,21 @@ function SignUpPage() {
     setLoading(true)
 
     try {
-      const result = await authClient.signUp.email({
-        name: name.trim(),
-        email: email.trim(),
+      const parsed = SignUpSchema.safeParse({
+        name,
+        email,
         password,
+      })
+      if (!parsed.success) {
+        setError(parsed.error.errors[0].message)
+        setLoading(false)
+        return
+      }
+
+      const result = await authClient.signUp.email({
+        name: parsed.data.name,
+        email: parsed.data.email,
+        password: parsed.data.password,
       })
       if (result.error) {
         setError(result.error.message || 'Sign up failed')

@@ -56,6 +56,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: 'PlotTheChart — Data Visualization Studio',
       },
+      {
+        name: 'description',
+        content: 'Instantly generate, configure, and save beautiful charts without writing code. PlotTheChart supports Bar, Line, Pie, Scatter, Radar, and Treemap visualizations.',
+      },
     ],
     links: [
       {
