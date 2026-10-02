@@ -1,4 +1,5 @@
 import { Link, createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
+import { Eye, EyeOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { Button } from '#/components/ui/button'
@@ -16,13 +17,22 @@ const SignUpSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 })
 
-export const Route = createFileRoute('/signup')({
-  beforeLoad: async () => {
+const signupSearchSchema = z.object({
+  redirect: z.string().optional(),
+})
+
+export const Route = createFileRoute('/_public/signup')({
+  validateSearch: signupSearchSchema,
+  beforeLoad: async ({ search }) => {
     const session = await getServerSessionFn()
     if (session?.user) {
-      throw redirect({ to: '/dashboard' })
+      throw redirect({ to: (search.redirect as any) || '/saved-projects' })
     }
   },
   component: SignUpPage,
@@ -31,18 +41,28 @@ export const Route = createFileRoute('/signup')({
 function SignUpPage() {
   const router = useRouter()
   const navigate = useNavigate()
+  const search = Route.useSearch()
+  const redirectUrl = search.redirect || '/saved-projects'
+  
   const { data: session, isPending } = authClient.useSession()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (session?.user) {
-      void navigate({ to: '/dashboard', replace: true })
+      if (session.user.emailVerified) {
+        void navigate({ to: redirectUrl as any, replace: true })
+      } else {
+        void navigate({ to: '/verify-email', replace: true })
+      }
     }
-  }, [session?.user, navigate])
+  }, [session?.user, navigate, redirectUrl])
 
   if (isPending || session?.user) {
     return (
@@ -62,9 +82,10 @@ function SignUpPage() {
         name,
         email,
         password,
+        confirmPassword,
       })
       if (!parsed.success) {
-        setError(parsed.error.errors[0].message)
+        setError(parsed.error.issues[0]?.message || 'Validation failed')
         setLoading(false)
         return
       }
@@ -79,7 +100,7 @@ function SignUpPage() {
         return
       }
       await router.invalidate()
-      await navigate({ to: '/dashboard', replace: true })
+      await navigate({ to: '/verify-email', replace: true })
     } catch {
       setError('An unexpected error occurred')
     } finally {
@@ -134,16 +155,56 @@ function SignUpPage() {
             <Label htmlFor="password" className="text-xs">
               Password
             </Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="h-9"
-              required
-              minLength={6}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+                className="h-9 pr-9"
+                required
+                minLength={6}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="sr-only">Toggle password visibility</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword" className="text-xs">
+              Confirm Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="********"
+                className="h-9 pr-9"
+                required
+                minLength={6}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="sr-only">Toggle confirm password visibility</span>
+              </Button>
+            </div>
           </div>
 
           {error && (
@@ -170,3 +231,9 @@ function SignUpPage() {
     </main>
   )
 }
+
+
+
+
+
+

@@ -13,6 +13,9 @@ const config = defineConfig(({ command }) => ({
       ignored: ['**/.agents/**', '**/.cursor/**', '**/.claude/**'],
     },
   },
+  optimizeDeps: {
+    include: ['use-sync-external-store/shim/with-selector.js'],
+  },
   plugins: [
     devtools({
       consolePiping: {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useRouter } from '@tanstack/react-router'
+import { Link, useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Code2,
-  Copy,
+  Copy, Dices,
   Download,
   FilePlus2,
   GitBranch,
@@ -58,6 +58,7 @@ import { CoordinatePointsInput } from './inputs/CoordinatePointsInput'
 import { HierarchicalTreeInput } from './inputs/HierarchicalTreeInput'
 import { ProportionalSlicesInput } from './inputs/ProportionalSlicesInput'
 import { TabularSeriesInput } from './inputs/TabularSeriesInput'
+import { SaveProjectModal } from './SaveProjectModal'
 
 const CHART_ICONS: Record<ChartTypeId, React.ComponentType<{ className?: string }>> = {
   bar: BarChart3,
@@ -84,11 +85,13 @@ const DRAFT_STORAGE_KEY = 'plotthechart.studio.draft.v1'
 interface ChartStudioProps {
   initialProject?: SerializedChartProject | null
   initialChartType?: ChartTypeId
+  isPublicMode?: boolean
 }
 
 export function ChartStudio({
   initialProject,
   initialChartType,
+  isPublicMode = false,
 }: ChartStudioProps) {
   const router = useRouter()
   const navigate = useNavigate()
@@ -112,13 +115,31 @@ export function ChartStudio({
     return names
   }
 
+  const location = useRouterState({ select: (s) => s.location })
+  
+  const getDraftState = () => {
+    let draft = (location.state as any)?.chartDraft
+    if (draft) return draft
+    if (typeof window !== 'undefined' && !initialProject) {
+      try {
+        const stored = window.localStorage.getItem(DRAFT_STORAGE_KEY)
+        if (stored) return JSON.parse(stored)
+      } catch {
+        // ignore
+      }
+    }
+    return null
+  }
+  
+  const draftState = getDraftState()
+
   const initialType: ChartTypeId =
-    initialProject?.chartType ?? initialChartType ?? 'bar'
+    initialProject?.chartType ?? initialChartType ?? draftState?.chartType ?? 'bar'
   const initialDef = getChartDefinition(initialType)
 
   const [chartType, setChartType] = useState<ChartTypeId>(initialType)
   const [data, setData] = useState<AnyChartData>(
-    () => initialProject?.dataPayload ?? initialDef.defaultData(),
+    () => initialProject?.dataPayload ?? draftState?.data ?? initialDef.defaultData(),
   )
   const [config, setConfig] = useState<ChartConfig>(() => {
     if (initialProject?.configPayload) {
@@ -131,13 +152,13 @@ export function ChartStudio({
           '',
       }
     }
-    return initialDef.defaultConfig()
+    return draftState?.config ?? initialDef.defaultConfig()
   })
   const [projectName, setProjectName] = useState<string>(
-    initialProject?.name ?? '',
+    initialProject?.name ?? draftState?.projectName ?? '',
   )
   const [projectDescription, setProjectDescription] = useState<string>(
-    initialProject?.description ?? '',
+    initialProject?.description ?? draftState?.projectDescription ?? '',
   )
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>(
     initialProject?.id,
@@ -149,9 +170,9 @@ export function ChartStudio({
   // Cache per-schema-kind data in memory so switching between schemas preserves user edits
   const [schemaDrafts, setSchemaDrafts] = useState<
     Partial<Record<DataSchemaKind, AnyChartData>>
-  >(() => ({
+  >(() => draftState?.schemaDrafts ?? {
     [data.schemaKind]: data,
-  }))
+  })
 
   const { data: session } = authClient.useSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -273,18 +294,40 @@ export function ChartStudio({
     }
 
     const nextDefaultCfg = nextDef.defaultConfig()
-    setChartType(nextType)
-    setData(nextData)
-    setConfig((prev) => ({
-      ...prev,
-      xAxisLabel: nextDef.supportsAxes ? prev.xAxisLabel : '',
-      yAxisLabel: nextDef.supportsAxes ? prev.yAxisLabel : '',
+    
+    const nextConfig = {
+      ...config,
+      xAxisLabel: nextDef.supportsAxes ? config.xAxisLabel : '',
+      yAxisLabel: nextDef.supportsAxes ? config.yAxisLabel : '',
       options: {
         ...nextDefaultCfg.options,
-        ...prev.options,
+        ...config.options,
       },
-    }))
+    }
+
+    setChartType(nextType)
+    setData(nextData)
+    setConfig(nextConfig)
     setSaveSuccessBanner(null)
+
+    if (location.pathname.startsWith('/workspace')) {
+      void navigate({ to: '/workspace', search: (prev: any) => ({ ...prev, type: nextType }), replace: true })
+    } else {
+      void navigate({
+        to: '/workspace',
+        search: { type: nextType },
+        state: {
+          chartDraft: {
+            chartType: nextType,
+            data: nextData,
+            config: nextConfig,
+            projectName,
+            projectDescription,
+            schemaDrafts: updatedDrafts,
+          },
+        } as any,
+      })
+    }
   }
 
   const handleDataChange = (nextData: AnyChartData) => {
@@ -294,6 +337,54 @@ export function ChartStudio({
       [nextData.schemaKind]: nextData,
     }))
     setSaveSuccessBanner(null)
+  }
+
+  const handleLoadSampleData = () => {
+    const nextData: any = JSON.parse(JSON.stringify(data));
+    
+    if (nextData.schemaKind === 'tabular-series') {
+      nextData.rows = nextData.rows.map((r: any, i: number) => {
+        const row = { ...r };
+        row.category = `Period ${i + 1}`;
+        for (const key of Object.keys(row.values)) {
+          row.values[key] = Math.floor(Math.random() * 80) + 20;
+        }
+        return row;
+      });
+      nextData.series = nextData.series.map((s: any, i: number) => ({ ...s, name: `Metric ${i + 1}` }));
+    } else if (nextData.schemaKind === 'proportional-slices') {
+      nextData.slices = nextData.slices.map((s: any, i: number) => {
+        const slice = { ...s };
+        slice.label = `Segment ${i + 1}`;
+        slice.value = Math.floor(Math.random() * 50) + 10;
+        return slice;
+      });
+    } else if (nextData.schemaKind === 'coordinate-points') {
+      nextData.groups = nextData.groups.map((g: any, i: number) => ({ ...g, name: `Cluster ${i + 1}` }));
+      nextData.points = nextData.points.map((p: any, i: number) => {
+        const pt = { ...p };
+        pt.label = `Item ${i + 1}`;
+        pt.x = Math.floor(Math.random() * 100);
+        pt.y = Math.floor(Math.random() * 100);
+        pt.size = Math.floor(Math.random() * 40) + 10;
+        return pt;
+      });
+    } else if (nextData.schemaKind === 'hierarchical-tree') {
+      nextData.rootLabel = 'Portfolio';
+      nextData.branches = nextData.branches.map((b: any, i: number) => {
+        const branch = { ...b };
+        branch.name = `Group ${i + 1}`;
+        branch.children = branch.children.map((c: any, j: number) => {
+          const child = { ...c };
+          child.name = `Node ${i + 1}.${j + 1}`;
+          child.value = Math.floor(Math.random() * 100) + 10;
+          return child;
+        });
+        return branch;
+      });
+    }
+    
+    handleDataChange(nextData);
   }
 
   const handleNewBlankChart = () => {
@@ -316,7 +407,7 @@ export function ChartStudio({
         // Ignore storage errors
       }
     }
-    void navigate({ to: '/studio', search: {} })
+    void navigate({ to: '/workspace', search: {} })
   }
 
   const handleExportSvg = () => {
@@ -370,15 +461,17 @@ export function ChartStudio({
     await queryClient.invalidateQueries({ queryKey: ['chart-projects'] })
     await router.invalidate()
     void navigate({
-      to: '/studio',
+      to: '/workspace',
       search: { projectId: saved.id },
       replace: true,
     })
   }
 
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+
   const handleSaveAction = async () => {
     if (!session?.user) {
-      void navigate({ to: '/signin' })
+      setIsAuthModalOpen(true)
       return
     }
     setIsSaving(true)
@@ -433,17 +526,19 @@ export function ChartStudio({
 
         {/* Primary Workflow Actions */}
         <div className="flex items-center gap-2 sm:pt-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground sm:h-9 sm:px-3"
-            onClick={handleNewBlankChart}
-            data-testid="new-chart-project-btn"
-          >
-            <FilePlus2 className="h-4 w-4" />
-            New
-          </Button>
+          {!isPublicMode && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground sm:h-9 sm:px-3"
+              onClick={handleNewBlankChart}
+              data-testid="new-chart-project-btn"
+            >
+              <FilePlus2 className="h-4 w-4" />
+              New
+            </Button>
+          )}
 
           <Button
             type="button"
@@ -487,7 +582,7 @@ export function ChartStudio({
             </span>
           </div>
           <Link
-            to="/dashboard"
+            to="/saved-projects"
             className="font-semibold underline hover:opacity-80 text-xs sm:text-sm shrink-0"
           >
             View in Saved Projects →
@@ -511,36 +606,51 @@ export function ChartStudio({
 
             {/* Data Toolbar: Chart Type Selector + Schema JSON */}
             <div className="relative flex flex-wrap items-center gap-2">
-              <Select
-                value={chartType}
-                onValueChange={(val) =>
-                  handleSelectChartType(val as ChartTypeId)
-                }
-              >
-                <SelectTrigger
-                  size="sm"
-                  aria-label="Chart Type"
-                  data-testid="chart-type-select-trigger"
-                  className="h-8 gap-2 px-2.5 text-xs"
+              {!isPublicMode && (
+                <Select
+                  value={chartType}
+                  onValueChange={(val) =>
+                    handleSelectChartType(val as ChartTypeId)
+                  }
                 >
-                  <SelectValue placeholder="Select chart type" />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  {CHART_TYPES_LIST.map((item) => {
-                    const Icon = CHART_ICONS[item.type] || BarChart3
-                    return (
-                      <SelectItem
-                        key={item.type}
-                        value={item.type}
-                        data-testid={`chart-type-option-${item.type}`}
-                      >
-                        <Icon className="h-4 w-4 text-primary" />
-                        <span>{SHORT_CHART_LABELS[item.type] ?? item.label}</span>
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
+                  <SelectTrigger
+                    size="sm"
+                    aria-label="Chart Type"
+                    data-testid="chart-type-select-trigger"
+                    className="h-8 gap-2 px-2.5 text-xs"
+                  >
+                    <SelectValue placeholder="Select chart type" />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    {CHART_TYPES_LIST.map((item) => {
+                      const Icon = CHART_ICONS[item.type] || BarChart3
+                      return (
+                        <SelectItem
+                          key={item.type}
+                          value={item.type}
+                          data-testid={`chart-type-option-${item.type}`}
+                        >
+                          <Icon className="h-4 w-4 text-primary" />
+                          <span>{SHORT_CHART_LABELS[item.type] ?? item.label}</span>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleLoadSampleData}
+                className="text-muted-foreground hover:text-foreground"
+                title="Load sample data"
+              >
+                <Dices className="h-4 w-4" />
+                <span className="hidden sm:inline">Sample Data</span>
+                <span className="sm:hidden">Sample</span>
+              </Button>
 
               <Button
                 type="button"
@@ -881,6 +991,17 @@ export function ChartStudio({
           })()}
         </section>
       </div>
+      <SaveProjectModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        onSuccess={() => {
+          setIsSaving(true)
+          handleSaveConfirmed({
+            name: config.title.trim() || projectName.trim() || defaultUntitledTitle,
+            description: config.subtitle.trim() || projectDescription.trim(),
+          }).finally(() => setIsSaving(false))
+        }}
+      />
     </div>
   )
 }

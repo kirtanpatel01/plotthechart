@@ -15,7 +15,7 @@ export default function BetterAuthHeader() {
     return (
       <div className="flex items-center gap-2">
         <Link
-          to="/dashboard"
+          to="/saved-projects"
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card/80 px-2.5 py-1.5 text-xs font-semibold text-foreground no-underline hover:bg-muted transition-colors"
         >
           <User className="h-3.5 w-3.5 text-primary" />

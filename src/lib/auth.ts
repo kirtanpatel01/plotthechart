@@ -207,7 +207,21 @@ function createAuth() {
         sendEmail({
           to: user.email,
           subject: 'Reset your password - PlotTheChart',
-          html: `<p>Hi ${user.name},</p><p>You recently requested to reset your password.</p><p><a href="${url}">Click here to reset your password</a></p><p>If you did not request this, please ignore this email.</p>`,
+          html: `
+            <div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px; color: #171717;">
+              <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Reset your password</h2>
+              <p style="font-size: 16px; line-height: 24px; color: #525252; margin-bottom: 24px;">
+                Hi ${user.name},<br/><br/>
+                We received a request to reset your PlotTheChart password. Click the button below to choose a new one.
+              </p>
+              <a href="${url}" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-size: 16px;">
+                Reset Password
+              </a>
+              <p style="font-size: 14px; line-height: 20px; color: #737373; margin-top: 32px;">
+                If you didn't request a password reset, you can safely ignore this email.
+              </p>
+            </div>
+          `,
         }).catch(console.error)
       }
     },
@@ -218,7 +232,21 @@ function createAuth() {
         sendEmail({
           to: user.email,
           subject: 'Verify your email - PlotTheChart',
-          html: `<p>Hi ${user.name},</p><p>Welcome to PlotTheChart! Please verify your email address by clicking the link below:</p><p><a href="${url}">Verify my email</a></p>`,
+          html: `
+            <div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px; color: #171717;">
+              <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Welcome to PlotTheChart! 📈</h2>
+              <p style="font-size: 16px; line-height: 24px; color: #525252; margin-bottom: 24px;">
+                Hi ${user.name},<br/><br/>
+                We're excited to have you on board. To start saving and managing your chart projects in the workspace, we just need to quickly verify your email address.
+              </p>
+              <a href="${url}" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500; font-size: 16px;">
+                Verify Email Address
+              </a>
+              <p style="font-size: 14px; line-height: 20px; color: #737373; margin-top: 32px;">
+                If you didn't sign up for PlotTheChart, you can safely ignore this email.
+              </p>
+            </div>
+          `,
         }).catch(console.error)
       }
     },

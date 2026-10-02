@@ -33,7 +33,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const handleSignOut = async () => {
     await authClient.signOut()
     await router.invalidate()
-    if (pathname.startsWith('/dashboard')) {
+    if (pathname.startsWith('/saved-projects') || pathname.startsWith('/workspace')) {
       await navigate({ to: '/signin', replace: true })
     }
   }
@@ -72,13 +72,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith('/studio')}
-                  tooltip="Studio"
+                  isActive={pathname.startsWith('/workspace')}
+                  tooltip="Workspace"
                   className="font-medium"
                 >
-                  <Link to="/studio" search={{}} className="no-underline">
+                  <Link to="/workspace" search={{}} className="no-underline">
                     <Sparkles />
-                    <span>Studio</span>
+                    <span>Workspace</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -87,11 +87,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith('/dashboard')}
+                    isActive={pathname.startsWith('/saved-projects')}
                     tooltip="Saved Projects"
                     className="font-medium"
                   >
-                    <Link to="/dashboard" className="no-underline">
+                    <Link to="/saved-projects" className="no-underline">
                       <FolderKanban />
                       <span>Saved Projects</span>
                     </Link>
@@ -102,11 +102,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith('/about')}
+                  isActive={pathname.startsWith('/architecture')}
                   tooltip="Architecture"
                   className="font-medium"
                 >
-                  <Link to="/about" className="no-underline">
+                  <Link to="/architecture" className="no-underline">
                     <Layers />
                     <span>Architecture</span>
                   </Link>
@@ -130,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   asChild
                   tooltip={session.user.name || session.user.email}
                 >
-                  <Link to="/dashboard" className="no-underline">
+                  <Link to="/saved-projects" className="no-underline">
                     <User className="text-muted-foreground" />
                     <span className="truncate">
                       {session.user.name || session.user.email}

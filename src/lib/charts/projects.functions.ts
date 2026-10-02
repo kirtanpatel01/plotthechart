@@ -20,6 +20,7 @@ async function requireAuthenticatedUser() {
   }
   setResponseHeader('Cache-Control', 'private, no-store')
   setResponseHeader('Vary', 'Cookie, Authorization')
+      console.log('Session user:', session?.user)
   return session.user
 }
 
@@ -34,12 +35,14 @@ export const getServerSessionFn = createServerFn({
     })
     setResponseHeader('Cache-Control', 'private, no-store')
     setResponseHeader('Vary', 'Cookie, Authorization')
+      console.log('Session user:', session?.user)
     if (!session?.user) return null
     return {
       user: {
         id: session.user.id,
         name: session.user.name,
         email: session.user.email,
+          emailVerified: session.user.emailVerified,
         image: session.user.image ?? null,
       },
     }
@@ -126,6 +129,7 @@ export const getChartProjectByIdFn = createServerFn({
       if (!session?.user) return null
       setResponseHeader('Cache-Control', 'private, no-store')
       setResponseHeader('Vary', 'Cookie, Authorization')
+      console.log('Session user:', session?.user)
 
       const record = await prisma.chartProject.findFirst({
         where: {
@@ -252,3 +256,4 @@ export const deleteChartProjectFn = createServerFn({
     })
     return { success: true, deletedId: existing.id }
   })
+

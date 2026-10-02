@@ -25,12 +25,12 @@ const landingSearchSchema = z.object({
   projectId: z.string().optional(),
 })
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/_public/')({
   validateSearch: landingSearchSchema,
   beforeLoad: ({ search }) => {
     if (search.projectId) {
       throw redirect({
-        to: '/studio',
+        to: '/workspace',
         search: { projectId: search.projectId },
       })
     }
@@ -118,7 +118,7 @@ function LandingPage() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button asChild size="sm">
-              <Link to="/studio" search={{}} className="no-underline">
+              <Link to="/workspace" search={{}} className="no-underline">
                 Open Studio
               </Link>
             </Button>
@@ -130,18 +130,18 @@ function LandingPage() {
         {/* Minimal Hero */}
         <section className="max-w-2xl space-y-3.5 sm:space-y-4">
           <span className="inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-            Data Visualization Studio
+            Data Visualization Tool
           </span>
           <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">
-            Free Data Visualization Studio & SVG Chart Maker
+            Free Online Chart Maker & Graph Generator
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            PlotTheChart is a powerful workspace for building beautiful Bar, Line, Area, Pie, Donut, Scatter, Radar, and Treemap charts. Enter your data, configure styling, and instantly export responsive vector graphics—no coding required.
+            Create charts online with our free graph maker. PlotTheChart is a powerful data visualization tool for building beautiful Bar, Line, Area, Pie, Donut, Scatter, Radar, and Treemap charts. Enter your data, configure styling, and instantly generate charts—no coding required.
           </p>
           <div className="pt-1 sm:pt-2">
             <Button asChild className="w-full sm:w-auto">
-              <Link to="/studio" search={{}} className="no-underline">
-                Open Studio
+              <Link to="/chart-maker" search={{}} className="no-underline">
+                Open Chart Maker
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -161,11 +161,21 @@ function LandingPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CHART_TYPES_LIST.map((chart) => {
             const Icon = CHART_ICONS[chart.type] || BarChart3
+            
+            let routeTo = '/workspace'
+            let searchParams: any = { type: chart.type }
+            
+            if (chart.type === 'bar') { routeTo = '/bar-chart-maker'; searchParams = {} }
+            else if (chart.type === 'line') { routeTo = '/line-chart-maker'; searchParams = {} }
+            else if (chart.type === 'pie') { routeTo = '/pie-chart-maker'; searchParams = {} }
+            else if (chart.type === 'area') { routeTo = '/area-chart-maker'; searchParams = {} }
+            else if (chart.type === 'scatter') { routeTo = '/scatter-plot-maker'; searchParams = {} }
+
             return (
               <Link
                 key={chart.type}
-                to="/studio"
-                search={{ type: chart.type }}
+                to={routeTo as any}
+                search={searchParams as any}
                 className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 no-underline transition-colors hover:border-foreground/30 hover:bg-muted/20"
               >
                 <div className="space-y-2">
@@ -218,6 +228,23 @@ function LandingPage() {
               </div>
             )
           })}
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="space-y-4 pt-8">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
+          Frequently Asked Questions
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <h3 className="font-semibold text-foreground">Is this online graph maker free?</h3>
+            <p className="text-sm text-muted-foreground">Yes! Our free chart maker allows you to create charts online and export them instantly without any hidden fees.</p>
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-semibold text-foreground">What types of charts can I create?</h3>
+            <p className="text-sm text-muted-foreground">As a versatile chart generator, you can create pie charts, line graphs, bar charts, scatter plots, donut charts, area charts, and more.</p>
+          </div>
         </div>
       </section>
       </main>

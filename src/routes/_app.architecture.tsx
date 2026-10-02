@@ -2,11 +2,11 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { Button } from '#/components/ui/button'
 import { CHART_TYPES_LIST } from '#/lib/charts/registry'
 
-export const Route = createFileRoute('/about')({
-  component: AboutPage,
+export const Route = createFileRoute('/_app/architecture')({
+  component: ArchitecturePage,
 })
 
-function AboutPage() {
+function ArchitecturePage() {
   return (
     <main className="w-full min-w-0 p-3 sm:p-6 space-y-6 sm:space-y-8">
       <section className="rounded-2xl border border-border bg-card/85 p-5 sm:p-8 space-y-3.5 sm:space-y-4">
@@ -25,7 +25,7 @@ function AboutPage() {
         </p>
         <div className="pt-2">
           <Button asChild size="lg" className="w-full sm:w-auto">
-            <Link to="/studio" search={{}} className="no-underline">
+            <Link to="/workspace" search={{}} className="no-underline">
               Launch Chart Studio →
             </Link>
           </Button>

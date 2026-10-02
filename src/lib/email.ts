@@ -23,7 +23,7 @@ export async function sendEmail({
 
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+      from: process.env.EMAIL_FROM || 'PlotTheChart <hello@kjpatel.me>',
       to,
       subject,
       html,
@@ -32,3 +32,4 @@ export async function sendEmail({
     console.error('Failed to send email:', error)
   }
 }
+

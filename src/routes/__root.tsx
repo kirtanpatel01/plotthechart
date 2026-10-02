@@ -1,25 +1,13 @@
 import {
   HeadContent,
-  Link,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
-  useRouterState,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { AppSidebar } from '../components/app-sidebar'
-import Footer from '../components/Footer'
-import ThemeToggle from '../components/ThemeToggle'
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '../components/ui/sidebar'
-
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-
 import appCss from '../styles.css?url'
-
 import type { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
@@ -87,24 +75,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       <p className="text-muted-foreground">
         The requested route does not exist in PlotTheChart Studio.
       </p>
-      <Link
-        to="/studio"
-        search={{}}
+      <a
+        href="/workspace"
         className="inline-flex h-9 items-center rounded-lg bg-primary px-4 font-semibold text-primary-foreground no-underline"
       >
-        Return to Chart Studio
-      </Link>
+        Return to Workspace
+      </a>
     </main>
   ),
   shellComponent: RootDocument,
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
-  const pathname = useRouterState({
-    select: (state) => state.location.pathname,
-  })
-  const isStandaloneLanding = pathname === '/'
-
+function RootDocument() {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -115,30 +97,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         suppressHydrationWarning
         className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-primary/25"
       >
-        {isStandaloneLanding ? (
-          <div className="flex min-h-svh w-full flex-col">
-            <div className="flex flex-1 flex-col w-full min-w-0">{children}</div>
-            <Footer />
-          </div>
-        ) : (
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset className="flex min-h-svh w-full flex-1 flex-col min-w-0">
-              <header className="sticky top-0 z-30 flex h-12 w-full shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 sm:px-6 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
-                <div className="flex items-center gap-2">
-                  <SidebarTrigger className="-ml-1.5 text-muted-foreground hover:text-foreground" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <ThemeToggle />
-                </div>
-              </header>
-              <div className="flex flex-1 flex-col w-full min-w-0">
-                {children}
-              </div>
-              <Footer />
-            </SidebarInset>
-          </SidebarProvider>
-        )}
+        <Outlet />
         <TanStackDevtools
           config={{
             position: 'bottom-right',

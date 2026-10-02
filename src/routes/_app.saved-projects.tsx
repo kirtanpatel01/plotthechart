@@ -54,11 +54,14 @@ const CHART_ICONS: Record<
 
 type SortOption = 'updated-desc' | 'created-desc' | 'name-asc'
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute('/_app/saved-projects')({
   beforeLoad: async () => {
     const session = await getServerSessionFn()
     if (!session?.user) {
       throw redirect({ to: '/signin' })
+    }
+    if (!session.user.emailVerified) {
+      throw redirect({ to: '/verify-email' })
     }
     return { user: session.user }
   },
@@ -166,7 +169,7 @@ function DashboardPage() {
 
           <Button asChild size="sm" className="h-8 lg:hidden">
             <Link
-              to="/studio"
+              to="/workspace"
               search={{}}
               className="no-underline"
               data-testid="create-new-project-link-mobile"
@@ -256,7 +259,7 @@ function DashboardPage() {
 
             <Button asChild size="sm" className="hidden h-8 lg:inline-flex">
               <Link
-                to="/studio"
+                to="/workspace"
                 search={{}}
                 className="no-underline"
                 data-testid="create-new-project-link"
@@ -288,7 +291,7 @@ function DashboardPage() {
           <div className="pt-2">
             {projects.length === 0 ? (
               <Button asChild size="sm">
-                <Link to="/studio" search={{}} className="no-underline">
+                <Link to="/workspace" search={{}} className="no-underline">
                   <FilePlus2 className="h-4 w-4" />
                   Open Chart Studio
                 </Link>
@@ -325,7 +328,7 @@ function DashboardPage() {
               >
                 {/* Top Half: Flush Hero Thumbnail Stage */}
                 <Link
-                  to="/studio"
+                  to="/workspace"
                   search={{ projectId: project.id }}
                   data-testid={`open-project-btn-${project.id}`}
                   className="relative block border-b border-border/60 bg-muted/20 p-3 no-underline transition-colors group-hover:bg-muted/35"
@@ -358,7 +361,7 @@ function DashboardPage() {
                 <div className="flex flex-1 items-center justify-between gap-3 p-4">
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <Link
-                      to="/studio"
+                      to="/workspace"
                       search={{ projectId: project.id }}
                       className="block truncate text-sm font-semibold text-foreground no-underline transition-colors hover:text-primary"
                     >

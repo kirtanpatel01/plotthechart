@@ -9,43 +9,113 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as SigninRouteImport } from './routes/signin'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as StudioRouteImport } from './routes/studio'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as PublicRouteImport } from './routes/_public'
+import { Route as AppArchitectureRouteImport } from './routes/_app.architecture'
+import { Route as AppAreaChartMakerRouteImport } from './routes/_app.area-chart-maker'
+import { Route as AppBarChartMakerRouteImport } from './routes/_app.bar-chart-maker'
+import { Route as AppChartMakerRouteImport } from './routes/_app.chart-maker'
+import { Route as AppDonutChartMakerRouteImport } from './routes/_app.donut-chart-maker'
+import { Route as AppGraphMakerRouteImport } from './routes/_app.graph-maker'
+import { Route as AppHistogramMakerRouteImport } from './routes/_app.histogram-maker'
+import { Route as AppLineChartMakerRouteImport } from './routes/_app.line-chart-maker'
+import { Route as AppPieChartMakerRouteImport } from './routes/_app.pie-chart-maker'
+import { Route as AppSavedProjectsRouteImport } from './routes/_app.saved-projects'
+import { Route as AppScatterPlotMakerRouteImport } from './routes/_app.scatter-plot-maker'
+import { Route as AppWorkspaceRouteImport } from './routes/_app.workspace'
+import { Route as PublicIndexRouteImport } from './routes/_public.index'
+import { Route as PublicSigninRouteImport } from './routes/_public.signin'
+import { Route as PublicSignupRouteImport } from './routes/_public.signup'
+import { Route as PublicVerifyEmailRouteImport } from './routes/_public.verify-email'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const IndexRoute = IndexRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppArchitectureRoute = AppArchitectureRouteImport.update({
+  id: '/architecture',
+  path: '/architecture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAreaChartMakerRoute = AppAreaChartMakerRouteImport.update({
+  id: '/area-chart-maker',
+  path: '/area-chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBarChartMakerRoute = AppBarChartMakerRouteImport.update({
+  id: '/bar-chart-maker',
+  path: '/bar-chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChartMakerRoute = AppChartMakerRouteImport.update({
+  id: '/chart-maker',
+  path: '/chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDonutChartMakerRoute = AppDonutChartMakerRouteImport.update({
+  id: '/donut-chart-maker',
+  path: '/donut-chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGraphMakerRoute = AppGraphMakerRouteImport.update({
+  id: '/graph-maker',
+  path: '/graph-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistogramMakerRoute = AppHistogramMakerRouteImport.update({
+  id: '/histogram-maker',
+  path: '/histogram-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLineChartMakerRoute = AppLineChartMakerRouteImport.update({
+  id: '/line-chart-maker',
+  path: '/line-chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPieChartMakerRoute = AppPieChartMakerRouteImport.update({
+  id: '/pie-chart-maker',
+  path: '/pie-chart-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSavedProjectsRoute = AppSavedProjectsRouteImport.update({
+  id: '/saved-projects',
+  path: '/saved-projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScatterPlotMakerRoute = AppScatterPlotMakerRouteImport.update({
+  id: '/scatter-plot-maker',
+  path: '/scatter-plot-maker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWorkspaceRoute = AppWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AppRoute,
+} as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SigninRoute = SigninRouteImport.update({
+const PublicSigninRoute = PublicSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
 } as any)
-const SignupRoute = SignupRouteImport.update({
+const PublicSignupRoute = PublicSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
 } as any)
-const StudioRoute = StudioRouteImport.update({
-  id: '/studio',
-  path: '/studio',
-  getParentRoute: () => rootRouteImport,
+const PublicVerifyEmailRoute = PublicVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => PublicRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -54,116 +124,260 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
-  '/studio': typeof StudioRoute
+  '/': typeof PublicIndexRoute
+  '/architecture': typeof AppArchitectureRoute
+  '/area-chart-maker': typeof AppAreaChartMakerRoute
+  '/bar-chart-maker': typeof AppBarChartMakerRoute
+  '/chart-maker': typeof AppChartMakerRoute
+  '/donut-chart-maker': typeof AppDonutChartMakerRoute
+  '/graph-maker': typeof AppGraphMakerRoute
+  '/histogram-maker': typeof AppHistogramMakerRoute
+  '/line-chart-maker': typeof AppLineChartMakerRoute
+  '/pie-chart-maker': typeof AppPieChartMakerRoute
+  '/saved-projects': typeof AppSavedProjectsRoute
+  '/scatter-plot-maker': typeof AppScatterPlotMakerRoute
+  '/workspace': typeof AppWorkspaceRoute
+  '/signin': typeof PublicSigninRoute
+  '/signup': typeof PublicSignupRoute
+  '/verify-email': typeof PublicVerifyEmailRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
-  '/studio': typeof StudioRoute
+  '/': typeof PublicIndexRoute
+  '/architecture': typeof AppArchitectureRoute
+  '/area-chart-maker': typeof AppAreaChartMakerRoute
+  '/bar-chart-maker': typeof AppBarChartMakerRoute
+  '/chart-maker': typeof AppChartMakerRoute
+  '/donut-chart-maker': typeof AppDonutChartMakerRoute
+  '/graph-maker': typeof AppGraphMakerRoute
+  '/histogram-maker': typeof AppHistogramMakerRoute
+  '/line-chart-maker': typeof AppLineChartMakerRoute
+  '/pie-chart-maker': typeof AppPieChartMakerRoute
+  '/saved-projects': typeof AppSavedProjectsRoute
+  '/scatter-plot-maker': typeof AppScatterPlotMakerRoute
+  '/workspace': typeof AppWorkspaceRoute
+  '/signin': typeof PublicSigninRoute
+  '/signup': typeof PublicSignupRoute
+  '/verify-email': typeof PublicVerifyEmailRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
-  '/signin': typeof SigninRoute
-  '/signup': typeof SignupRoute
-  '/studio': typeof StudioRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_public': typeof PublicRouteWithChildren
+  '/_app/architecture': typeof AppArchitectureRoute
+  '/_app/area-chart-maker': typeof AppAreaChartMakerRoute
+  '/_app/bar-chart-maker': typeof AppBarChartMakerRoute
+  '/_app/chart-maker': typeof AppChartMakerRoute
+  '/_app/donut-chart-maker': typeof AppDonutChartMakerRoute
+  '/_app/graph-maker': typeof AppGraphMakerRoute
+  '/_app/histogram-maker': typeof AppHistogramMakerRoute
+  '/_app/line-chart-maker': typeof AppLineChartMakerRoute
+  '/_app/pie-chart-maker': typeof AppPieChartMakerRoute
+  '/_app/saved-projects': typeof AppSavedProjectsRoute
+  '/_app/scatter-plot-maker': typeof AppScatterPlotMakerRoute
+  '/_app/workspace': typeof AppWorkspaceRoute
+  '/_public/signin': typeof PublicSigninRoute
+  '/_public/signup': typeof PublicSignupRoute
+  '/_public/verify-email': typeof PublicVerifyEmailRoute
+  '/_public/': typeof PublicIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
-    | '/dashboard'
+    | '/architecture'
+    | '/area-chart-maker'
+    | '/bar-chart-maker'
+    | '/chart-maker'
+    | '/donut-chart-maker'
+    | '/graph-maker'
+    | '/histogram-maker'
+    | '/line-chart-maker'
+    | '/pie-chart-maker'
+    | '/saved-projects'
+    | '/scatter-plot-maker'
+    | '/workspace'
     | '/signin'
     | '/signup'
-    | '/studio'
+    | '/verify-email'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
-    | '/dashboard'
+    | '/architecture'
+    | '/area-chart-maker'
+    | '/bar-chart-maker'
+    | '/chart-maker'
+    | '/donut-chart-maker'
+    | '/graph-maker'
+    | '/histogram-maker'
+    | '/line-chart-maker'
+    | '/pie-chart-maker'
+    | '/saved-projects'
+    | '/scatter-plot-maker'
+    | '/workspace'
     | '/signin'
     | '/signup'
-    | '/studio'
+    | '/verify-email'
     | '/api/auth/$'
   id:
     | '__root__'
-    | '/'
-    | '/about'
-    | '/dashboard'
-    | '/signin'
-    | '/signup'
-    | '/studio'
+    | '/_app'
+    | '/_public'
+    | '/_app/architecture'
+    | '/_app/area-chart-maker'
+    | '/_app/bar-chart-maker'
+    | '/_app/chart-maker'
+    | '/_app/donut-chart-maker'
+    | '/_app/graph-maker'
+    | '/_app/histogram-maker'
+    | '/_app/line-chart-maker'
+    | '/_app/pie-chart-maker'
+    | '/_app/saved-projects'
+    | '/_app/scatter-plot-maker'
+    | '/_app/workspace'
+    | '/_public/signin'
+    | '/_public/signup'
+    | '/_public/verify-email'
+    | '/_public/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  DashboardRoute: typeof DashboardRoute
-  SigninRoute: typeof SigninRoute
-  SignupRoute: typeof SignupRoute
-  StudioRoute: typeof StudioRoute
+  AppRoute: typeof AppRouteWithChildren
+  PublicRoute: typeof PublicRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/architecture': {
+      id: '/_app/architecture'
+      path: '/architecture'
+      fullPath: '/architecture'
+      preLoaderRoute: typeof AppArchitectureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/area-chart-maker': {
+      id: '/_app/area-chart-maker'
+      path: '/area-chart-maker'
+      fullPath: '/area-chart-maker'
+      preLoaderRoute: typeof AppAreaChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/bar-chart-maker': {
+      id: '/_app/bar-chart-maker'
+      path: '/bar-chart-maker'
+      fullPath: '/bar-chart-maker'
+      preLoaderRoute: typeof AppBarChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chart-maker': {
+      id: '/_app/chart-maker'
+      path: '/chart-maker'
+      fullPath: '/chart-maker'
+      preLoaderRoute: typeof AppChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/donut-chart-maker': {
+      id: '/_app/donut-chart-maker'
+      path: '/donut-chart-maker'
+      fullPath: '/donut-chart-maker'
+      preLoaderRoute: typeof AppDonutChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/graph-maker': {
+      id: '/_app/graph-maker'
+      path: '/graph-maker'
+      fullPath: '/graph-maker'
+      preLoaderRoute: typeof AppGraphMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/histogram-maker': {
+      id: '/_app/histogram-maker'
+      path: '/histogram-maker'
+      fullPath: '/histogram-maker'
+      preLoaderRoute: typeof AppHistogramMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/line-chart-maker': {
+      id: '/_app/line-chart-maker'
+      path: '/line-chart-maker'
+      fullPath: '/line-chart-maker'
+      preLoaderRoute: typeof AppLineChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pie-chart-maker': {
+      id: '/_app/pie-chart-maker'
+      path: '/pie-chart-maker'
+      fullPath: '/pie-chart-maker'
+      preLoaderRoute: typeof AppPieChartMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/saved-projects': {
+      id: '/_app/saved-projects'
+      path: '/saved-projects'
+      fullPath: '/saved-projects'
+      preLoaderRoute: typeof AppSavedProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/scatter-plot-maker': {
+      id: '/_app/scatter-plot-maker'
+      path: '/scatter-plot-maker'
+      fullPath: '/scatter-plot-maker'
+      preLoaderRoute: typeof AppScatterPlotMakerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/workspace': {
+      id: '/_app/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof AppWorkspaceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_public/': {
+      id: '/_public/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signin': {
-      id: '/signin'
+    '/_public/signin': {
+      id: '/_public/signin'
       path: '/signin'
       fullPath: '/signin'
-      preLoaderRoute: typeof SigninRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicSigninRouteImport
+      parentRoute: typeof PublicRoute
     }
-    '/signup': {
-      id: '/signup'
+    '/_public/signup': {
+      id: '/_public/signup'
       path: '/signup'
       fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicSignupRouteImport
+      parentRoute: typeof PublicRoute
     }
-    '/studio': {
-      id: '/studio'
-      path: '/studio'
-      fullPath: '/studio'
-      preLoaderRoute: typeof StudioRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_public/verify-email': {
+      id: '/_public/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof PublicVerifyEmailRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -175,13 +389,58 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRouteChildren {
+  AppArchitectureRoute: typeof AppArchitectureRoute
+  AppAreaChartMakerRoute: typeof AppAreaChartMakerRoute
+  AppBarChartMakerRoute: typeof AppBarChartMakerRoute
+  AppChartMakerRoute: typeof AppChartMakerRoute
+  AppDonutChartMakerRoute: typeof AppDonutChartMakerRoute
+  AppGraphMakerRoute: typeof AppGraphMakerRoute
+  AppHistogramMakerRoute: typeof AppHistogramMakerRoute
+  AppLineChartMakerRoute: typeof AppLineChartMakerRoute
+  AppPieChartMakerRoute: typeof AppPieChartMakerRoute
+  AppSavedProjectsRoute: typeof AppSavedProjectsRoute
+  AppScatterPlotMakerRoute: typeof AppScatterPlotMakerRoute
+  AppWorkspaceRoute: typeof AppWorkspaceRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppArchitectureRoute: AppArchitectureRoute,
+  AppAreaChartMakerRoute: AppAreaChartMakerRoute,
+  AppBarChartMakerRoute: AppBarChartMakerRoute,
+  AppChartMakerRoute: AppChartMakerRoute,
+  AppDonutChartMakerRoute: AppDonutChartMakerRoute,
+  AppGraphMakerRoute: AppGraphMakerRoute,
+  AppHistogramMakerRoute: AppHistogramMakerRoute,
+  AppLineChartMakerRoute: AppLineChartMakerRoute,
+  AppPieChartMakerRoute: AppPieChartMakerRoute,
+  AppSavedProjectsRoute: AppSavedProjectsRoute,
+  AppScatterPlotMakerRoute: AppScatterPlotMakerRoute,
+  AppWorkspaceRoute: AppWorkspaceRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface PublicRouteChildren {
+  PublicSigninRoute: typeof PublicSigninRoute
+  PublicSignupRoute: typeof PublicSignupRoute
+  PublicVerifyEmailRoute: typeof PublicVerifyEmailRoute
+  PublicIndexRoute: typeof PublicIndexRoute
+}
+
+const PublicRouteChildren: PublicRouteChildren = {
+  PublicSigninRoute: PublicSigninRoute,
+  PublicSignupRoute: PublicSignupRoute,
+  PublicVerifyEmailRoute: PublicVerifyEmailRoute,
+  PublicIndexRoute: PublicIndexRoute,
+}
+
+const PublicRouteWithChildren =
+  PublicRoute._addFileChildren(PublicRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  DashboardRoute: DashboardRoute,
-  SigninRoute: SigninRoute,
-  SignupRoute: SignupRoute,
-  StudioRoute: StudioRoute,
+  AppRoute: AppRouteWithChildren,
+  PublicRoute: PublicRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

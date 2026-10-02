@@ -4,7 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { getDatabaseUrl } from './database-url.js'
 import { PrismaClient } from './generated/prisma/client.js'
 
-neonConfig.poolQueryViaFetch = true
+// neonConfig.poolQueryViaFetch = true
 
 declare global {
   var __prismaV8: PrismaClient | undefined
